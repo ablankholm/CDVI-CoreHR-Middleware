@@ -37,7 +37,7 @@ namespace Lyca2CoreHrApiTask
             app.OnExecute(() => 
             {
                 app.ShowHelp();
-                Test();
+                Test(false);
                 return 2;
             });
 
@@ -55,21 +55,28 @@ namespace Lyca2CoreHrApiTask
             //Post data to CoreHr API
             //@TODO
 
-            //Iterative testing during dev
-
 
 
             app.Command("RunDevTest", c => {
                 c.Description = "Runs the currently configured test method for iterative development";
                 c.HelpOption("-?|-h|--help");
 
-                c.OnExecute(() => {
+                var silentOption = c.Option("--silent", "Run without asking for user imput.", CommandOptionType.NoValue);
 
-                    Test();
+                c.OnExecute(() => {
+                    log.Info($"Executing RunDevTest at {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
+                    bool silentTesting = false;
+
+                    if (silentOption.HasValue())
+                    {
+                        silentTesting = true;
+                    }
+                    Test(silentTesting);
 
                     return 0;
                 });
             });
+
 
 
 
@@ -86,7 +93,7 @@ namespace Lyca2CoreHrApiTask
 
 
         //@TempTesting (refactor out to a dedicated testing module)
-        static void Test()
+        static void Test(bool silent)
         {
             List<Event> el = new List<Event>();
             Event e = new Event();
@@ -131,7 +138,11 @@ namespace Lyca2CoreHrApiTask
             string eventOutput = $"UserID: {e.UserNameID.ToString()}" + $" Count: {events.Count.ToString()}" + $" TimeStamp: {e.FieldTime.ToString()}";
             Console.WriteLine(eventOutput);
             log.Info(eventOutput);
-            Console.ReadLine();
+            if (silent == false)
+            {
+                Console.ReadLine();
+            }
+
 
             string json = JsonConvert.SerializeObject(events.ToArray(), Formatting.Indented);
             System.IO.File.WriteAllText(appPath + @"\App_Data\test.txt", json);
