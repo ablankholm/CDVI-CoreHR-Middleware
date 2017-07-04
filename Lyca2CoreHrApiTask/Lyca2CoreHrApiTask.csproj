@@ -74,7 +74,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DAL\CDVIDatabase.cs" />
+    <Compile Include="DAL\CDVIRepository.cs" />
     <Compile Include="Models\Event.cs" />
     <Compile Include="Models\UserClockingPayload.cs" />
     <Compile Include="Program.cs" />
