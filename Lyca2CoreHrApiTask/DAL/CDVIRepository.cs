@@ -55,7 +55,7 @@ namespace Lyca2CoreHrApiTask.DAL
         public List<Event> GetEvents(int fromEventId, Cardinality toEndOfTable = Cardinality.Ascending)
         {
             List<Event> events = new List<Event>();
-            string opStr = (toEndOfTable == Cardinality.Descending) ? @">" : "<";
+            string opStr = (toEndOfTable == Cardinality.Descending) ? @">=" : "<=";
             string query = eventsBaseQuery + $"WHERE [Event ID] {opStr} {fromEventId}";
             log.Info($"GetEvents(fromEventId: {fromEventId}, toEndOfTable: {toEndOfTable.ToString()}) executing query : {query}");
             using (var conn = new SqlConnection(connectionString))
@@ -135,20 +135,6 @@ namespace Lyca2CoreHrApiTask.DAL
         public List<Event> GetEventsByUsers(DateTime from, DateTime to, List<int> eventTypes, List<int> userIDs)
         {
             return GetEvents(from, to, eventTypes, userIDs);
-        }
-
-
-
-        public List<Event> GetEventsAfter(int eventID)
-        {
-            return GetEvents(eventID, Cardinality.Ascending);
-        }
-
-
-
-        public List<Event> GetEventsBefore(int eventID)
-        {
-            return GetEvents(eventID, Cardinality.Descending);
         }
     }
 }
