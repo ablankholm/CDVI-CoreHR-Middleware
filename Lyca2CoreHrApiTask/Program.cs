@@ -14,20 +14,26 @@ using System.Windows.Forms;
 using System.Configuration;
 using Lyca2CoreHrApiTask.DAL;
 using Microsoft.Extensions.CommandLineUtils;
+using System.Threading;
 
 namespace Lyca2CoreHrApiTask
 {
     class Program
     {
-        private Logger log = LogManager.GetCurrentClassLogger();
+        private static Logger log = LogManager.GetCurrentClassLogger();
         private static string appPath = Application.StartupPath;
         private ApplicationState state = new ApplicationState();
         private CDVIRepository CDVI = new CDVIRepository();
 
         static int Main(string[] args)
         {
+            //Capture unhandled exceptions
+            Application.ThreadException += new ThreadExceptionEventHandler(OnUnhandledThreadException);
+            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(OnUnhandledException);
+
             Program app = new Program();
-            Logger log = app.log; //Convenience
+
+            //Wrap specific exceptions
             try
             {
                 var CLI = new CommandLineApplication
@@ -39,7 +45,7 @@ namespace Lyca2CoreHrApiTask
 
 
 
-                CLI.OnExecute(() => 
+                CLI.OnExecute(() =>
                 {
                     //@TODO: Default behaviour
                     return (int)ExitCode.Success;
@@ -47,7 +53,8 @@ namespace Lyca2CoreHrApiTask
 
 
 
-                CLI.Command("RunDevTest", c => {
+                CLI.Command("RunDevTest", c =>
+                {
                     c.Description = "Runs the currently configured test method for iterative development";
                     c.HelpOption("-?|-h|--help");
 
@@ -55,7 +62,8 @@ namespace Lyca2CoreHrApiTask
 
                     var testName = c.Option("-n|--name", "Specify the test to run by its name", CommandOptionType.SingleValue);
 
-                    c.OnExecute(() => {
+                    c.OnExecute(() =>
+                    {
                         log.Info($"Executing RunDevTest at {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
                         bool silentTesting = false;
 
@@ -91,14 +99,31 @@ namespace Lyca2CoreHrApiTask
 
                 return CLI.Execute(args);
             }
+            //Handle specific exceptions
             catch (Exception ex)
             {
                 log.Error($"Encountered exception: {ex.ToString()}. Exiting...");
             }
+
+            //If we haven't returned by this point, something went wrong: exit
             return (int)ExitCode.GenericFailure;
         }
 
+        //Catch-all for unhandled exceptions
+        static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            ExitCode exitCode = ExitCode.UnhandledException;
+            log.Error($"Encountered unhandled exception: {e.ExceptionObject.ToString()}. Exiting with code {exitCode}...");
+            Environment.Exit((int)exitCode);
+        }
 
+        //Catch-all for unhandled thread exceptions
+        static void OnUnhandledThreadException(object sender, ThreadExceptionEventArgs e)
+        {
+            ExitCode exitCode = ExitCode.UnhandledThreadException;
+            log.Error($"Encountered unhandled thread exception: {e.Exception.ToString()}. Exiting with code {exitCode}...");
+            Environment.Exit((int)exitCode);
+        }
 
         //@TempTesting (refactor out to a dedicated testing module)
         void Test(bool silent)
