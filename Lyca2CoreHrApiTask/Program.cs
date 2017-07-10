@@ -41,9 +41,8 @@ namespace Lyca2CoreHrApiTask
 
                 CLI.OnExecute(() => 
                 {
-                    CLI.ShowHelp();
-                    app.Test(false);
-                    return 2;
+                    //@TODO: Default behaviour
+                    return (int)ExitCode.Success;
                 });
 
 
@@ -84,7 +83,7 @@ namespace Lyca2CoreHrApiTask
                             }
                         }
 
-                        return 0;
+                        return (int)ExitCode.Success;
                     });
                 });
 
@@ -96,7 +95,7 @@ namespace Lyca2CoreHrApiTask
             {
                 log.Error($"Encountered exception: {ex.ToString()}. Exiting...");
             }
-            return -1;
+            return (int)ExitCode.GenericFailure;
         }
 
 
