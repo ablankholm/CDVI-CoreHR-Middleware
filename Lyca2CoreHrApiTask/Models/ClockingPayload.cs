@@ -11,7 +11,7 @@ namespace Lyca2CoreHrApiTask.Models
     /// Used to model a users clocking record as required by the CoreHR API
     ///  
     /// </summary>
-    class UserClockingPayload
+    class ClockingPayload
     {
         public string Person { get; set; }
     }

@@ -31,9 +31,9 @@ namespace Lyca2CoreHrApiTask.DAL
 
 
 
-        public List<Event> GetEvents(List<int> eventIDs)
+        public List<ClockingEvent> GetEvents(List<int> eventIDs)
         {
-            List<Event> events = new List<Event>();
+            List<ClockingEvent> events = new List<ClockingEvent>();
             string EventIDs = String.Join(",", eventIDs);
             string query = eventsBaseQuery + $"WHERE [Event ID] IN ({EventIDs})";
             log.Info($"GetEvents(eventIDs: {EventIDs}) executing query : {query}");
@@ -42,7 +42,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 conn.Open();
                 using (IDatabase db = new Database(conn))
                 {
-                    var result = db.Fetch<Event>(query);
+                    var result = db.Fetch<ClockingEvent>(query);
                     events = result;
                 }
                 conn.Close();
@@ -52,9 +52,9 @@ namespace Lyca2CoreHrApiTask.DAL
 
 
 
-        public List<Event> GetEvents(int fromEventId, Cardinality toEndOfTable = Cardinality.Ascending)
+        public List<ClockingEvent> GetEvents(int fromEventId, Cardinality toEndOfTable = Cardinality.Ascending)
         {
-            List<Event> events = new List<Event>();
+            List<ClockingEvent> events = new List<ClockingEvent>();
             string opStr = (toEndOfTable == Cardinality.Descending) ? @">=" : "<=";
             string query = eventsBaseQuery + $"WHERE [Event ID] {opStr} {fromEventId}";
             log.Info($"GetEvents(fromEventId: {fromEventId}, toEndOfTable: {toEndOfTable.ToString()}) executing query : {query}");
@@ -63,7 +63,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 conn.Open();
                 using (IDatabase db = new Database(conn))
                 {
-                    var result = db.Fetch<Event>(query);
+                    var result = db.Fetch<ClockingEvent>(query);
                     events = result;
                 }
                 conn.Close();
@@ -73,9 +73,9 @@ namespace Lyca2CoreHrApiTask.DAL
 
 
 
-        public List<Event> GetEvents(DateTime from, DateTime to, List<int> eventTypes)
+        public List<ClockingEvent> GetEvents(DateTime from, DateTime to, List<int> eventTypes)
         {
-            List<Event> events = new List<Event>();
+            List<ClockingEvent> events = new List<ClockingEvent>();
             string From = from.ToString("yyyy-MM-dd HH:mm:ss.fff");
             string To = to.ToString("yyyy-MM-dd HH:mm:ss.fff");
             string EventTypes = String.Join(",", eventTypes);
@@ -88,7 +88,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 conn.Open();
                 using (IDatabase db = new Database(conn))
                 {
-                    var result = db.Fetch<Event>(query);
+                    var result = db.Fetch<ClockingEvent>(query);
                     events = result;
                 }
                 conn.Close();
@@ -98,9 +98,9 @@ namespace Lyca2CoreHrApiTask.DAL
 
 
 
-        public List<Event> GetEvents(DateTime from, DateTime to, List<int> eventTypes, List<int> userIDs)
+        public List<ClockingEvent> GetEvents(DateTime from, DateTime to, List<int> eventTypes, List<int> userIDs)
         {
-            List<Event> events = new List<Event>();
+            List<ClockingEvent> events = new List<ClockingEvent>();
             string From = from.ToString("yyyy-MM-dd HH:mm:ss.fff");
             string To = to.ToString("yyyy-MM-dd HH:mm:ss.fff");
             string EventTypes = String.Join(",", eventTypes);
@@ -115,7 +115,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 conn.Open();
                 using (IDatabase db = new Database(conn))
                 {
-                    var result = db.Fetch<Event>(query);
+                    var result = db.Fetch<ClockingEvent>(query);
                     events = result;
                 }
                 conn.Close();
@@ -125,14 +125,14 @@ namespace Lyca2CoreHrApiTask.DAL
 
 
 
-        public List<Event> GetAccessEvents(DateTime from, DateTime to)
+        public List<ClockingEvent> GetAccessEvents(DateTime from, DateTime to)
         {
             return GetEvents(from, to, new List<int> { 1280, 1288, 1313 });
         }
 
 
 
-        public List<Event> GetEventsByUsers(DateTime from, DateTime to, List<int> eventTypes, List<int> userIDs)
+        public List<ClockingEvent> GetEventsByUsers(DateTime from, DateTime to, List<int> eventTypes, List<int> userIDs)
         {
             return GetEvents(from, to, eventTypes, userIDs);
         }

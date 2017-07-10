@@ -75,17 +75,22 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DAL\CDVIRepository.cs" />
-    <Compile Include="Models\Event.cs" />
-    <Compile Include="Models\UserClockingPayload.cs" />
+    <Compile Include="Models\ApplicationState.cs" />
+    <Compile Include="Models\ClockingEvent.cs" />
+    <Compile Include="Models\ProcessingState.cs" />
+    <Compile Include="Models\ClockingPayload.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Logs\placeholder.txt">
+    <None Include="Logs\log.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="App_Data\placeholder.txt">
+    <None Include="App_Data\state.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="App_Data\teststate.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Content Include="NLog.config">

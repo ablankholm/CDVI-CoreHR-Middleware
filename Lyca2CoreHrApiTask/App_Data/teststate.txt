@@ -1,0 +1,40 @@
+{
+  "ProcessingState": {
+    "LastSuccessfulRecord": 1337,
+    "UnsuccessfulRecords": [
+      {
+        "EventID": 9001,
+        "EventType": 0,
+        "FieldTime": "0001-01-01T00:00:00",
+        "LoggedTime": "0001-01-01T00:00:00",
+        "OperatorID": 0,
+        "CardHolderID": 0,
+        "RecordNameID": 0,
+        "SiteNameID": 0,
+        "UserNameID": 0
+      },
+      {
+        "EventID": 9002,
+        "EventType": 0,
+        "FieldTime": "0001-01-01T00:00:00",
+        "LoggedTime": "0001-01-01T00:00:00",
+        "OperatorID": 0,
+        "CardHolderID": 0,
+        "RecordNameID": 0,
+        "SiteNameID": 0,
+        "UserNameID": 0
+      },
+      {
+        "EventID": 9003,
+        "EventType": 0,
+        "FieldTime": "0001-01-01T00:00:00",
+        "LoggedTime": "0001-01-01T00:00:00",
+        "OperatorID": 0,
+        "CardHolderID": 0,
+        "RecordNameID": 0,
+        "SiteNameID": 0,
+        "UserNameID": 0
+      }
+    ]
+  }
+}

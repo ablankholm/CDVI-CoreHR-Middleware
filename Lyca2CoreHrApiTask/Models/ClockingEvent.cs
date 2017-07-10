@@ -12,7 +12,7 @@ namespace Lyca2CoreHrApiTask.Models
 {
     [TableName("Events")]
     [PrimaryKey("Event ID")]
-    public class Event
+    public class ClockingEvent
     {
         [Column("Event ID")]
         public int EventID { get; set; }

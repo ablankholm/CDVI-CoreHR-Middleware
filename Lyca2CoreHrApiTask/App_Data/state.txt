@@ -1,0 +1,6 @@
+{
+  "ProcessingState": {
+    "LastSuccessfulRecord": 0,
+    "UnsuccessfulRecords": []
+  }
+}
