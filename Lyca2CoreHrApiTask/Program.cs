@@ -15,6 +15,9 @@ using System.Configuration;
 using Lyca2CoreHrApiTask.DAL;
 using Microsoft.Extensions.CommandLineUtils;
 using System.Threading;
+using System.Net.Http;
+using ServiceStack.Text;
+using ServiceStack;
 
 namespace Lyca2CoreHrApiTask
 {
@@ -85,6 +88,12 @@ namespace Lyca2CoreHrApiTask
                                 case "TestAppState":
                                     app.TestAppState(silentTesting);
                                     break;
+                                case "TestHttpGet":
+                                    app.TestHttpGet(silentTesting);
+                                    break;
+                                case "TestHttpPost":
+                                    app.TestHttpPost(silentTesting);
+                                    break;
                                 default:
                                     app.Test(silentTesting);
                                     break;
@@ -102,10 +111,11 @@ namespace Lyca2CoreHrApiTask
             //Handle specific exceptions
             catch (Exception ex)
             {
-                log.Error($"Encountered exception: {ex.ToString()}. Exiting...");
+                log.Error($"Encountered exception: {ex.ToString()}.");
             }
 
             //If we haven't returned by this point, something went wrong: exit
+            log.Error($"Exiting with code {ExitCode.GenericFailure} ({ExitCode.GenericFailure.ToString()})");
             return (int)ExitCode.GenericFailure;
         }
 
@@ -113,7 +123,7 @@ namespace Lyca2CoreHrApiTask
         static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             ExitCode exitCode = ExitCode.UnhandledException;
-            log.Error($"Encountered unhandled exception: {e.ExceptionObject.ToString()}. Exiting with code {exitCode}...");
+            log.Error($"Encountered unhandled exception: {e.ExceptionObject.ToString()}. Exiting with code {exitCode} ({exitCode.ToString()})...");
             Environment.Exit((int)exitCode);
         }
 
@@ -121,7 +131,7 @@ namespace Lyca2CoreHrApiTask
         static void OnUnhandledThreadException(object sender, ThreadExceptionEventArgs e)
         {
             ExitCode exitCode = ExitCode.UnhandledThreadException;
-            log.Error($"Encountered unhandled thread exception: {e.Exception.ToString()}. Exiting with code {exitCode}...");
+            log.Error($"Encountered unhandled thread exception: {e.Exception.ToString()}. Exiting with code {exitCode} ({exitCode.ToString()})...");
             Environment.Exit((int)exitCode);
         }
 
@@ -293,6 +303,43 @@ namespace Lyca2CoreHrApiTask
             log.Debug($"Serializing state ({json}) to {pathToStateFile}");
             File.WriteAllText(pathToStateFile, json);
 
+            if (silent == false)
+            {
+                Console.ReadLine();
+            }
+        }
+
+        //@TempTesting (refactor out to a dedicated testing module)
+        void TestHttpGet(bool silent)
+        {
+            string result = @"http://httpbin.org/get".GetStringFromUrl();
+            log.Debug($"TestHttpGet: Response = {result}");
+
+            if (silent == false)
+            {
+                Console.ReadLine();
+            }
+        }
+
+        //@TempTesting (refactor out to a dedicated testing module)
+        void TestHttpPost(bool silent)
+        {
+            try
+            {
+                ClockingPayload cp = new ClockingPayload() { Person = "9001" };
+                string payload = JsonConvert.SerializeObject(cp);
+                string result = @"http://httpbin.org/post".PostJsonToUrl(payload);
+                log.Debug($"TestHttpPost: Response = {result}");
+            }
+            catch (Exception ex)
+            {
+                log.Debug($"TestHttpPost encountered an exception: {ex.ToString()}");
+                if (silent == false)
+                {
+                    Console.ReadLine();
+                }
+                throw;
+            }
             if (silent == false)
             {
                 Console.ReadLine();
