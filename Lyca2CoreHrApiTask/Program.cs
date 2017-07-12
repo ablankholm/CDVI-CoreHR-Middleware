@@ -18,15 +18,17 @@ using System.Threading;
 using System.Net.Http;
 using ServiceStack.Text;
 using ServiceStack;
+using Polly;
+using Polly.Retry;
 
 namespace Lyca2CoreHrApiTask
 {
     class Program
     {
-        private static Logger log = LogManager.GetCurrentClassLogger();
-        private static string appPath = Application.StartupPath;
-        private ApplicationState state = new ApplicationState();
-        private CDVIRepository CDVI = new CDVIRepository();
+        private static Logger log       = LogManager.GetCurrentClassLogger();
+        private static string appPath   = Application.StartupPath;
+        private ApplicationState state  = new ApplicationState();
+        private CDVIRepository CDVI     = new CDVIRepository();
 
         static int Main(string[] args)
         {
@@ -39,6 +41,7 @@ namespace Lyca2CoreHrApiTask
             //Wrap specific exceptions
             try
             {
+                //Setup CLI
                 var CLI = new CommandLineApplication
                 {
                     Name = "Lyca2CoreHrApiTask",
@@ -50,8 +53,11 @@ namespace Lyca2CoreHrApiTask
 
                 CLI.OnExecute(() =>
                 {
-                    //@TODO: Default behaviour
-                    return (int)ExitCode.Success;
+                    app.StartOrResume();
+
+                    //If we got this far, something went wrong -> Exit
+                    log.Error($"Exiting with code {ExitCode.StarOrResumeFailed} ({ExitCode.StarOrResumeFailed.ToString()})");
+                    return (int)ExitCode.StarOrResumeFailed;
                 });
 
 
@@ -111,12 +117,211 @@ namespace Lyca2CoreHrApiTask
             //Handle specific exceptions
             catch (Exception ex)
             {
+                //Placeholder for future handling of specific exceptions
+                //...
+
+                //If no specific exception handling, handle generically
                 log.Error($"Encountered exception: {ex.ToString()}.");
+                return LogExit(ExitCode.ExceptionEncountered, Models.LogLevel.Error);
             }
 
-            //If we haven't returned by this point, something went wrong: exit
-            log.Error($"Exiting with code {ExitCode.GenericFailure} ({ExitCode.GenericFailure.ToString()})");
-            return (int)ExitCode.GenericFailure;
+            //This point should be unreachable - leaving this in as a safety net
+            //in the event that future refactoring fails to take this into account:
+            //If we haven't returned by this point, something went wrong -> Exit
+            return LogExit(ExitCode.GenericFailure, Models.LogLevel.Error);
+        }
+
+
+
+        private void StartOrResume()
+        {
+            log.Info($"Starting / resuming...");
+            try
+            {
+                LoadState(appPath + @"\App_Data\state.txt");
+                //@TODO: Orchestration
+                CleanupAndExit();
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Failed to start / resume (exception encountered: {ex}).");
+                //If we reached this point, exit without cleanup
+                Exit(ExitCode.StarOrResumeFailed, Models.LogLevel.Error);
+            }
+        }
+
+
+
+        private void CleanupAndExit()
+        {
+            log.Info($"Performing cleanup...");
+            try
+            {
+                SaveState(appPath + @"\App_Data\state.txt");
+
+                //All is well -> Exit
+                Exit(ExitCode.Success);
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Failed to perform cleanup (exception encountered: {ex}).");
+                //If we reached this point, exit without cleanup
+                Exit(ExitCode.CleanupAndExitFailed, Models.LogLevel.Error);
+            }
+        }
+
+
+
+        private void LoadState(string path)
+        {
+            log.Info($"Loading state...");
+            try
+            {
+                /**Resilience policy for app state serialization:
+                 * 
+                 * On any exception, retry up to 3 times with an escalating wait timer between each retry.
+                 * 
+                 * Notes: Exceptions during state (de)serialization are expected to involve file system access or related 
+                 * network micro-faults / stutter in a distributed file system, however given that there is nothing meaningful 
+                 * we can do about such (or any) exceptions here, we will optimistically retry a few times before bubbling 
+                 * exceptions up to the caller. We deliberately do not take any compensating action in the event of a failure 
+                 * to avoid serializing an inconsistent state.
+                **/
+                RetryPolicy stateSerializationPolicy = Policy.Handle<Exception>()
+                                                    .WaitAndRetry(new[]
+                                                    {
+                                                    TimeSpan.FromSeconds(1),
+                                                    TimeSpan.FromSeconds(3),
+                                                    TimeSpan.FromSeconds(30)
+                                                    });
+                stateSerializationPolicy.Execute(
+                    () =>
+                    {
+                        state = JsonConvert.DeserializeObject<ApplicationState>(File.ReadAllText(path));
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Failed to load state (exception encountered: {ex}).");
+                throw;
+            }
+            log.Info($"State loaded.");
+        }
+
+
+
+        private void SaveState(string path)
+        {
+            log.Info($"Saving state...");
+            try
+            {
+                /**Resilience policy for app state serialization:
+                 * 
+                 * On any exception, retry up to 3 times with an escalating wait timer between each retry.
+                 * 
+                 * Notes: Exceptions during state (de)serialization are expected to involve file system access or related 
+                 * network micro-faults / stutter in a distributed file system, however given that there is nothing meaningful 
+                 * we can do about such (or any) exceptions here, we will optimistically retry a few times before bubbling 
+                 * exceptions up to the caller. We deliberately do not take any compensating action in the event of a failure 
+                 * to avoid serializing an inconsistent state.
+                **/
+                RetryPolicy stateSerializationPolicy = Policy.Handle<Exception>()
+                                                    .WaitAndRetry(new[]
+                                                    {
+                                                    TimeSpan.FromSeconds(1),
+                                                    TimeSpan.FromSeconds(3),
+                                                    TimeSpan.FromSeconds(30)
+                                                    });
+                stateSerializationPolicy.Execute(
+                    () =>
+                    {
+                        File.WriteAllText(path, JsonConvert.SerializeObject(state, Formatting.Indented));
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Failed to save state (exception encountered: {ex}).");
+                throw;
+            }
+            log.Info($"State saved.");
+        }
+
+
+
+        //Convenience function for structured shutdown outside of main
+        private void Exit(  ExitCode exitCode, 
+                            Models.LogLevel logLevel    = Models.LogLevel.Info, 
+                            string logMessage           = "")
+        {
+            string message = $"Exiting with code {(int)exitCode} ({exitCode.ToString()})";
+            if (!(logMessage == ""))
+            {
+                message += ": " + logMessage;
+            }
+
+            switch (logLevel)
+            {
+                case Models.LogLevel.Off:
+                    break;
+                case Models.LogLevel.Trace:
+                    log.Trace(message);
+                    break;
+                case Models.LogLevel.Debug:
+                    log.Debug(message);
+                    break;
+                case Models.LogLevel.Info:
+                    log.Info(message);
+                    break;
+                case Models.LogLevel.Warn:
+                    log.Warn(message);
+                    break;
+                case Models.LogLevel.Error:
+                    log.Error(message);
+                    break;
+                case Models.LogLevel.Fatal:
+                    log.Fatal(message);
+                    break;
+                default:
+                    log.Info(message);
+                    break;
+            }
+            Environment.Exit((int)exitCode);
+        }
+
+        //Convenience function for keeping return calls and associated logging dry
+        private static int LogExit(ExitCode exitCode, Models.LogLevel logLevel)
+        {
+            string message = $"Exiting with code {(int)exitCode} ({exitCode.ToString()})";
+
+            switch (logLevel)
+            {
+                case Models.LogLevel.Off:
+                    break;
+                case Models.LogLevel.Trace:
+                    log.Trace(message);
+                    break;
+                case Models.LogLevel.Debug:
+                    log.Debug(message);
+                    break;
+                case Models.LogLevel.Info:
+                    log.Info(message);
+                    break;
+                case Models.LogLevel.Warn:
+                    log.Warn(message);
+                    break;
+                case Models.LogLevel.Error:
+                    log.Error(message);
+                    break;
+                case Models.LogLevel.Fatal:
+                    log.Fatal(message);
+                    break;
+                default:
+                    log.Info(message);
+                    break;
+            }
+            return((int)exitCode);
         }
 
         //Catch-all for unhandled exceptions
@@ -275,22 +480,13 @@ namespace Lyca2CoreHrApiTask
             string json = string.Empty;
 
             //Test load
+            LoadState(pathToStateFile);
             ApplicationState s = new ApplicationState();
-            try
-            {
-                json = File.ReadAllText(pathToStateFile);
-                s = JsonConvert.DeserializeObject<ApplicationState>(json);
-                log.Debug($"Successfully loaded state from {pathToStateFile}" + Environment.NewLine
-                            + $"{nameof(s.ProcessingState.LastSuccessfulRecord)}: {s.ProcessingState.LastSuccessfulRecord.ToString()}; " + Environment.NewLine
-                            + $"{nameof(s.ProcessingState.UnsuccessfulRecords)} count: {s.ProcessingState.UnsuccessfulRecords.Count}; " + Environment.NewLine
-                            + $"Unsuccessful records: {String.Join(",", s.ProcessingState.UnsuccessfulRecords.Select(x => x.EventID))}");
-            }
-            catch (Exception)
-            {
-                //Pass to caller
-                throw;
-            }
-
+            s = state;
+            log.Debug($"Successfully loaded state from {pathToStateFile}" + Environment.NewLine
+                        + $"{nameof(s.ProcessingState.LastSuccessfulRecord)}: {s.ProcessingState.LastSuccessfulRecord.ToString()}; " + Environment.NewLine
+                        + $"{nameof(s.ProcessingState.UnsuccessfulRecords)} count: {s.ProcessingState.UnsuccessfulRecords.Count}; " + Environment.NewLine
+                        + $"Unsuccessful records: {String.Join(",", s.ProcessingState.UnsuccessfulRecords.Select(x => x.EventID))}");
 
             //Test save
             s.ProcessingState.LastSuccessfulRecord = 1337;
@@ -298,10 +494,9 @@ namespace Lyca2CoreHrApiTask
                                                                                         new ClockingEvent() { EventID = 9002},
                                                                                         new ClockingEvent() { EventID = 9003}
             });
-            json = string.Empty;
-            json = JsonConvert.SerializeObject(s, Formatting.Indented);
-            log.Debug($"Serializing state ({json}) to {pathToStateFile}");
-            File.WriteAllText(pathToStateFile, json);
+            state = s;
+            SaveState(pathToStateFile);
+
 
             if (silent == false)
             {

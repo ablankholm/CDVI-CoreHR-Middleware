@@ -88,6 +88,7 @@
     <Compile Include="Models\ApplicationState.cs" />
     <Compile Include="Models\ClockingEvent.cs" />
     <Compile Include="Models\ExitCode.cs" />
+    <Compile Include="Models\LogLevel.cs" />
     <Compile Include="Models\ProcessingState.cs" />
     <Compile Include="Models\ClockingPayload.cs" />
     <Compile Include="Program.cs" />

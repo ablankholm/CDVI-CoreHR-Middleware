@@ -9,5 +9,6 @@ namespace Lyca2CoreHrApiTask.Models
     public class ApplicationState
     {
         public ProcessingState ProcessingState { get; set; } = new ProcessingState();
+
     }
 }
