@@ -85,6 +85,7 @@
   <ItemGroup>
     <Compile Include="DAL\CDVIRepository.cs" />
     <Compile Include="DAL\CoreHrApi.cs" />
+    <Compile Include="Resilience\LycaPolicyRegistry.cs" />
     <Compile Include="Models\ApplicationState.cs" />
     <Compile Include="Models\ClockingEvent.cs" />
     <Compile Include="Models\ExitCode.cs" />

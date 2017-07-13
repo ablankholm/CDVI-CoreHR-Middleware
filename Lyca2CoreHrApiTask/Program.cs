@@ -1,41 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using NPoco;
 using NLog;
 using Newtonsoft.Json;
 using Lyca2CoreHrApiTask.Models;
 using System.IO;
-using System.Data.Common;
-using System.Data.SqlClient;
 using System.Windows.Forms;
-using System.Configuration;
 using Lyca2CoreHrApiTask.DAL;
 using Microsoft.Extensions.CommandLineUtils;
 using System.Threading;
-using System.Net.Http;
-using ServiceStack.Text;
 using ServiceStack;
 using Polly;
 using Polly.Retry;
+using Polly.Registry;
+using Lyca2CoreHrApiTask.Resilience;
 
 namespace Lyca2CoreHrApiTask
 {
     class Program
     {
-        private static Logger log       = LogManager.GetCurrentClassLogger();
-        private static string appPath   = Application.StartupPath;
-        private ApplicationState state  = new ApplicationState();
-        private CDVIRepository CDVI     = new CDVIRepository();
+        private static Logger       log      = LogManager.GetCurrentClassLogger();
+        private static string       appPath  = Application.StartupPath;
+        private ApplicationState    state    = new ApplicationState();
+        private LycaPolicyRegistry  policies = new LycaPolicyRegistry();
+        private CDVIRepository      CDVI     = new CDVIRepository();
 
         static int Main(string[] args)
         {
             //Capture unhandled exceptions
             Application.ThreadException += new ThreadExceptionEventHandler(OnUnhandledThreadException);
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(OnUnhandledException);
-
             Program app = new Program();
 
             //Wrap specific exceptions
@@ -177,25 +171,7 @@ namespace Lyca2CoreHrApiTask
             log.Info($"Loading state...");
             try
             {
-                /**Resilience policy for app state serialization:
-                 * 
-                 * On any exception, retry up to 3 times with an escalating wait timer between each retry.
-                 * 
-                 * Notes: Exceptions during state (de)serialization are expected to involve file system access or related 
-                 * network micro-faults / stutter in a distributed file system, however given that there is nothing meaningful 
-                 * we can do about such (or any) exceptions here, we will optimistically retry a few times before bubbling 
-                 * exceptions up to the caller. We deliberately do not take any compensating action in the event of a failure 
-                 * to avoid serializing an inconsistent state.
-                **/
-                RetryPolicy stateSerializationPolicy = Policy.Handle<Exception>()
-                                                    .WaitAndRetry(new[]
-                                                    {
-                                                    TimeSpan.FromSeconds(1),
-                                                    TimeSpan.FromSeconds(3),
-                                                    TimeSpan.FromSeconds(30)
-                                                    });
-                stateSerializationPolicy.Execute(
-                    () =>
+                policies.Get<RetryPolicy>("stateSerializationPolicy").Execute(() =>
                     {
                         state = JsonConvert.DeserializeObject<ApplicationState>(File.ReadAllText(path));
                     }
@@ -216,24 +192,7 @@ namespace Lyca2CoreHrApiTask
             log.Info($"Saving state...");
             try
             {
-                /**Resilience policy for app state serialization:
-                 * 
-                 * On any exception, retry up to 3 times with an escalating wait timer between each retry.
-                 * 
-                 * Notes: Exceptions during state (de)serialization are expected to involve file system access or related 
-                 * network micro-faults / stutter in a distributed file system, however given that there is nothing meaningful 
-                 * we can do about such (or any) exceptions here, we will optimistically retry a few times before bubbling 
-                 * exceptions up to the caller. We deliberately do not take any compensating action in the event of a failure 
-                 * to avoid serializing an inconsistent state.
-                **/
-                RetryPolicy stateSerializationPolicy = Policy.Handle<Exception>()
-                                                    .WaitAndRetry(new[]
-                                                    {
-                                                    TimeSpan.FromSeconds(1),
-                                                    TimeSpan.FromSeconds(3),
-                                                    TimeSpan.FromSeconds(30)
-                                                    });
-                stateSerializationPolicy.Execute(
+                policies.Get<RetryPolicy>("stateSerializationPolicy").Execute(
                     () =>
                     {
                         File.WriteAllText(path, JsonConvert.SerializeObject(state, Formatting.Indented));
