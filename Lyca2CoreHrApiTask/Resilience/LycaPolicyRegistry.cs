@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Polly;
 using Polly.Registry;
 using Polly.Retry;
+using Polly.Timeout;
+using Lyca2CoreHrApiTask.Properties;
 
 namespace Lyca2CoreHrApiTask.Resilience
 {
@@ -13,7 +15,7 @@ namespace Lyca2CoreHrApiTask.Resilience
     {
         public LycaPolicyRegistry()
         {
-            /**Resilience policy for app state serialization:
+            /**Resilience (retry) policy for app state serialization:
              * 
              * On any exception, retry up to 3 times with an escalating wait timer between each retry.
              * 
@@ -26,10 +28,35 @@ namespace Lyca2CoreHrApiTask.Resilience
             this["stateSerializationPolicy"] = Policy.Handle<Exception>()
                                                         .WaitAndRetry(new[]
                                                         {
-                                                                TimeSpan.FromSeconds(1),
-                                                                TimeSpan.FromSeconds(3),
-                                                                TimeSpan.FromSeconds(30)
+                                                            TimeSpan.FromSeconds(1),
+                                                            TimeSpan.FromSeconds(3),
+                                                            TimeSpan.FromSeconds(30)
                                                         });
+
+            /** Resilience (retry) policiy for contacting the CDVi database:
+             * 
+             * On any exception, retry up to 3 times with an escalating wait timer between each retry. 
+             * 
+             * Notes: We catch all exceptions since there are no specific exceptions (typically SQL / connection related exceptions)
+             * that we can meaningfully handle.
+             * **/
+            this["cdvi:DbRetryPolicy"] = Policy.Handle<Exception>()
+                                                .WaitAndRetry(new[] 
+                                                {
+                                                            TimeSpan.FromSeconds(1),
+                                                            TimeSpan.FromSeconds(5), 
+                                                            TimeSpan.FromSeconds(10)
+                                                });
+
+            /** Resilience (timeout) policiy for contacting the CDVi database:
+             * 
+             * If excution time exceeds the threshold, terminate and throw an exception
+             * 
+             * Notes: This policy will mostly be used when qurying the Events table in the CDVI database which holds a large number
+             * of records, to prevent a query from taking up too many resources on the server. The primary purpose of the server that 
+             * houses the database is running the CDVI application, so caution is needed to avoid taxing the shared resources on the machine.
+             * **/
+            this["cdvi:DbTimeoutPolicy"] = Policy.Timeout(Settings.Default.CdviDbTimeout);
         }
     }
 }

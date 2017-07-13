@@ -24,7 +24,6 @@ namespace Lyca2CoreHrApiTask.Models
         public DateTime LoggedTime { get; set; }
         [Column("Operator ID")]
         public int OperatorID { get; set; }
-
         [Column("Card Holder ID")]
         public int CardHolderID { get; set; }
         [Column("Record Name ID")]

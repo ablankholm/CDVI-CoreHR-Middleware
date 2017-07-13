@@ -27,9 +27,8 @@ namespace Lyca2CoreHrApiTask
 
         static int Main(string[] args)
         {
-            //Capture unhandled exceptions
-            Application.ThreadException += new ThreadExceptionEventHandler(OnUnhandledThreadException);
-            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(OnUnhandledException);
+            Application.ThreadException                 += new ThreadExceptionEventHandler(OnUnhandledThreadException);
+            AppDomain.CurrentDomain.UnhandledException  += new UnhandledExceptionEventHandler(OnUnhandledException);
             Program app = new Program();
 
             //Wrap specific exceptions
@@ -111,7 +110,7 @@ namespace Lyca2CoreHrApiTask
             //Handle specific exceptions
             catch (Exception ex)
             {
-                //Placeholder for future handling of specific exceptions
+                //Any future handling of specific exceptions goes here
                 //...
 
                 //If no specific exception handling, handle generically
@@ -164,8 +163,6 @@ namespace Lyca2CoreHrApiTask
             }
         }
 
-
-
         private void LoadState(string path)
         {
             log.Info($"Loading state...");
@@ -184,8 +181,6 @@ namespace Lyca2CoreHrApiTask
             }
             log.Info($"State loaded.");
         }
-
-
 
         private void SaveState(string path)
         {
@@ -206,8 +201,6 @@ namespace Lyca2CoreHrApiTask
             }
             log.Info($"State saved.");
         }
-
-
 
         //Convenience function for structured shutdown outside of main
         private void Exit(  ExitCode exitCode, 
@@ -456,6 +449,9 @@ namespace Lyca2CoreHrApiTask
             state = s;
             SaveState(pathToStateFile);
 
+            //Note policy
+            Policy p = policies.Get<RetryPolicy>("stateSerializationPolicy");
+            log.Debug($"State serialization policy held in registry = {p.PolicyKey}; Policies in registry = {policies.Count}");
 
             if (silent == false)
             {

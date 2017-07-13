@@ -85,6 +85,11 @@
   <ItemGroup>
     <Compile Include="DAL\CDVIRepository.cs" />
     <Compile Include="DAL\CoreHrApi.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
     <Compile Include="Resilience\LycaPolicyRegistry.cs" />
     <Compile Include="Models\ApplicationState.cs" />
     <Compile Include="Models\ClockingEvent.cs" />
@@ -113,6 +118,10 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">
