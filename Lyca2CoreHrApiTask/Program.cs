@@ -19,11 +19,20 @@ namespace Lyca2CoreHrApiTask
 {
     class Program
     {
-        private static Logger       log      = LogManager.GetCurrentClassLogger();
-        private static string       appPath  = Application.StartupPath;
-        private ApplicationState    state    = new ApplicationState();
-        private LycaPolicyRegistry  policies = new LycaPolicyRegistry();
-        private CDVIRepository      CDVI     = new CDVIRepository();
+        private static Logger       log         = LogManager.GetCurrentClassLogger();
+        private static string       appPath     = Application.StartupPath;
+        private ApplicationState    state       = new ApplicationState();
+        private LycaPolicyRegistry  policies    = new LycaPolicyRegistry();
+        private CDVIRepository      CDVI        = new CDVIRepository();
+        private CoreHrApi           CoreAPI     = new CoreHrApi(); 
+
+
+        public Program()
+        {
+            CDVI.Policies = policies;
+            CoreAPI.Policies = policies;
+        }
+
 
         static int Main(string[] args)
         {

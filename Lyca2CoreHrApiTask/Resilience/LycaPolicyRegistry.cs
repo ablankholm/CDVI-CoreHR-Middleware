@@ -25,7 +25,7 @@ namespace Lyca2CoreHrApiTask.Resilience
              * exceptions up to the caller. We deliberately do not take any compensating action in the event of a failure 
              * to avoid serializing an inconsistent state.
             **/
-            this["stateSerializationPolicy"] = Policy.Handle<Exception>()
+            Policy stateSerializationPolicy = Policy.Handle<Exception>()
                                                         .WaitAndRetry(new[]
                                                         {
                                                             TimeSpan.FromSeconds(1),
@@ -39,13 +39,13 @@ namespace Lyca2CoreHrApiTask.Resilience
              * 
              * Notes: We catch all exceptions since there are no specific exceptions (typically SQL / connection related exceptions)
              * that we can meaningfully handle.
-             * **/
-            this["cdvi:DbRetryPolicy"] = Policy.Handle<Exception>()
-                                                .WaitAndRetry(new[] 
+            **/
+            Policy cdviDbRetryPolicy = Policy.Handle<Exception>()
+                                                .WaitAndRetry(new[]
                                                 {
-                                                            TimeSpan.FromSeconds(1),
-                                                            TimeSpan.FromSeconds(5), 
-                                                            TimeSpan.FromSeconds(10)
+                                                    TimeSpan.FromSeconds(1),
+                                                    TimeSpan.FromSeconds(5),
+                                                    TimeSpan.FromSeconds(10)
                                                 });
 
             /** Resilience (timeout) policiy for contacting the CDVi database:
@@ -55,8 +55,21 @@ namespace Lyca2CoreHrApiTask.Resilience
              * Notes: This policy will mostly be used when qurying the Events table in the CDVI database which holds a large number
              * of records, to prevent a query from taking up too many resources on the server. The primary purpose of the server that 
              * houses the database is running the CDVI application, so caution is needed to avoid taxing the shared resources on the machine.
-             * **/
-            this["cdvi:DbTimeoutPolicy"] = Policy.Timeout(Settings.Default.CdviDbTimeout);
+            **/
+            Policy cdviDbTimeoutPolicy = Policy.Timeout(Settings.Default.CdviDbTimeout);
+
+            /** Resilience policiy for contacting the CDVi database:
+             * 
+             * Combines the CDVI database retry and timeout policies into a single policy for convenience.
+            **/
+            Policy cdviDbPolicy = Policy.Wrap(cdviDbTimeoutPolicy, cdviDbRetryPolicy);
+
+
+            //Register policies
+            this["stateSerializationPolicy"]    = stateSerializationPolicy;
+            this["cdviDbRetryPolicy"]           = cdviDbRetryPolicy;
+            this["cdviDbTimeoutPolicy"]         = cdviDbTimeoutPolicy;
+            this["cdviDbPolicy"]                = cdviDbPolicy;
         }
     }
 }
