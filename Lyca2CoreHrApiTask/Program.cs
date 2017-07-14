@@ -29,8 +29,8 @@ namespace Lyca2CoreHrApiTask
 
         public Program()
         {
-            CDVI.Policies = policies;
-            CoreAPI.Policies = policies;
+            CDVI.Policies       = policies;
+            CoreAPI.Policies    = policies;
         }
 
 
@@ -140,15 +140,22 @@ namespace Lyca2CoreHrApiTask
             log.Info($"Starting / resuming...");
             try
             {
+                //Restore from previous runs
                 LoadState(appPath + @"\App_Data\state.txt");
-                //@TODO: Orchestration
-                CleanupAndExit();
+                //Post backlog (previously unsuccesful posts)
+                //CoreAPI.PostClockingRecordBatch(ref state.ProcessingState.PendingRecords);
+                //TODO: Post new records
+
             }
             catch (Exception ex)
             {
                 log.Error($"Failed to start / resume (exception encountered: {ex}).");
-                //If we reached this point, exit without cleanup
                 Exit(ExitCode.StarOrResumeFailed, Models.LogLevel.Error);
+            }
+            finally
+            {
+                //Make things ready for next run or recovery
+                CleanupAndExit();
             }
         }
 
@@ -446,14 +453,14 @@ namespace Lyca2CoreHrApiTask
             s = state;
             log.Debug($"Successfully loaded state from {pathToStateFile}" + Environment.NewLine
                         + $"{nameof(s.ProcessingState.LastSuccessfulRecord)}: {s.ProcessingState.LastSuccessfulRecord.ToString()}; " + Environment.NewLine
-                        + $"{nameof(s.ProcessingState.UnsuccessfulRecords)} count: {s.ProcessingState.UnsuccessfulRecords.Count}; " + Environment.NewLine
-                        + $"Unsuccessful records: {String.Join(",", s.ProcessingState.UnsuccessfulRecords.Select(x => x.EventID))}");
+                        + $"{nameof(s.ProcessingState.PendingRecords)} count: {s.ProcessingState.PendingRecords.Count}; " + Environment.NewLine
+                        + $"Unsuccessful records: {String.Join(",", s.ProcessingState.PendingRecords.Select(x => x.EventID))}");
 
             //Test save
             s.ProcessingState.LastSuccessfulRecord = 1337;
-            s.ProcessingState.UnsuccessfulRecords.AddRange(new List<ClockingEvent>() { new ClockingEvent() { EventID = 9001},
-                                                                                        new ClockingEvent() { EventID = 9002},
-                                                                                        new ClockingEvent() { EventID = 9003}
+            s.ProcessingState.PendingRecords.AddRange(new List<ClockingEvent>() { new ClockingEvent() { EventID = 9001},
+                                                                                    new ClockingEvent() { EventID = 9002},
+                                                                                    new ClockingEvent() { EventID = 9003}
             });
             state = s;
             SaveState(pathToStateFile);

@@ -1,7 +1,7 @@
 {
   "ProcessingState": {
     "LastSuccessfulRecord": 1337,
-    "UnsuccessfulRecords": [
+    "PendingRecords": [
       {
         "EventID": 9001,
         "EventType": 0,

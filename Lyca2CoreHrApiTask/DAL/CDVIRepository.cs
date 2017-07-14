@@ -169,6 +169,7 @@ namespace Lyca2CoreHrApiTask.DAL
                                                     + $"AND [UserNameID] IN ({UserIDs})";
 
 
+
                 log.Info($"GetEvents(from: {From}, to: {To}, eventTypes: {EventTypes}, userIDs: {UserIDs}) executing query : {query}");
                 Policies.Get<Policy>("cdviDbPolicy").Execute(() => 
                 {
