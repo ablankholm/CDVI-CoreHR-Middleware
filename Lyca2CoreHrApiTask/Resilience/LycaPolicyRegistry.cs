@@ -64,12 +64,19 @@ namespace Lyca2CoreHrApiTask.Resilience
             **/
             Policy cdviDbPolicy = Policy.Wrap(cdviDbTimeoutPolicy, cdviDbRetryPolicy);
 
+            /** Resilience policiy for contacting the CDVi database:
+             * 
+             * Combines the CDVI database retry and timeout policies into a single policy for convenience.
+            **/
+            Policy apiRecordPostingPolicy = Policy.Handle<Exception>().Retry(3);
+
 
             //Register policies
             this["stateSerializationPolicy"]    = stateSerializationPolicy;
             this["cdviDbRetryPolicy"]           = cdviDbRetryPolicy;
             this["cdviDbTimeoutPolicy"]         = cdviDbTimeoutPolicy;
             this["cdviDbPolicy"]                = cdviDbPolicy;
+            this["apiRecordPostingPolicy"]      = apiRecordPostingPolicy;
         }
     }
 }
