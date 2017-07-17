@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Data;
 
 namespace Lyca2CoreHrApiTask.Models
 {
-    /// <summary>
-    /// Used to model a users clocking record as required by the CoreHR API
-    ///  
-    /// </summary>
-    class ClockingPayload
+    public class ClockingPayload
     {
-        public string Person { get; set; }
+        public string person { get; set; }          = string.Empty;
+        public string badge_no { get; set; }        = string.Empty;
+        public string clock_date_time { get; set; } = string.Empty;
+        public string record_type { get; set; }     = string.Empty;
+        public string function_code { get; set; }   = string.Empty;
+        public string function_value { get; set; }  = string.Empty;
+        public string device_id { get; set; }       = string.Empty;
     }
 }

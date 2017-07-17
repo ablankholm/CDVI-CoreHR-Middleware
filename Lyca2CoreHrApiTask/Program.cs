@@ -159,8 +159,6 @@ namespace Lyca2CoreHrApiTask
             }
         }
 
-
-
         private void CleanupAndExit()
         {
             log.Info($"Performing cleanup...");
@@ -492,7 +490,7 @@ namespace Lyca2CoreHrApiTask
         {
             try
             {
-                ClockingPayload cp = new ClockingPayload() { Person = "9001" };
+                ClockingEvent cp = new ClockingEvent() { UserNameID = 9001 };
                 string payload = JsonConvert.SerializeObject(cp);
                 string result = @"http://httpbin.org/post".PostJsonToUrl(payload);
                 log.Debug($"TestHttpPost: Response = {result}");
