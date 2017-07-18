@@ -111,6 +111,9 @@ namespace Lyca2CoreHrApiTask
                                 case "TestApiAuthentication":
                                     app.TestApiAuthentication(silentTesting);
                                     break;
+                                case "TestApiPost":
+                                    app.TestApiPost(silentTesting);
+                                    break;
                                 default:
                                     app.Test(silentTesting);
                                     break;
@@ -524,22 +527,38 @@ namespace Lyca2CoreHrApiTask
         {
             try
             {
-                //var settings = Properties.Settings.Default;
-                //var client = new RestClient(settings.CoreHrApiOAuthTokenEndpoint);
-                //var request = new RestRequest(Method.POST);
-                //request.AddHeader("cache-control", "no-cache");
-                //request.AddHeader("content-type", "application/x-www-form-urlencoded");
-                //request.AddHeader("authorization", $"Basic {settings.CoreHrApiBase64EncodedAppCredentials}");
-                //request.AddParameter("application/x-www-form-urlencoded", "grant_type=client_credentials", ParameterType.RequestBody);
-                //IRestResponse response = client.Execute(request);
-
-                //BearerToken bearerToken = JsonConvert.DeserializeObject<BearerToken>(response.Content);
-                
-                log.Debug($"API Response: {JsonConvert.SerializeObject(CoreAPI.Authenticate().Token, Formatting.Indented)}");
+                log.Debug($"TestApiAuthentication - API Response: {JsonConvert.SerializeObject(CoreAPI.Authenticate().Token, Formatting.Indented)}");
             }
             catch (Exception ex)
             {
-                log.Debug($"TestGetBearerToken encountered an exception: {ex.ToString()}");
+                log.Debug($"TestApiAuthentication encountered an exception: {ex.ToString()}");
+                if (silent == false)
+                {
+                    Console.ReadLine();
+                }
+                throw;
+            }
+            if (silent == false)
+            {
+                Console.ReadLine();
+            }
+        }
+
+        //@TempTesting (refactor out to a dedicated testing module)
+        async void TestApiPost(bool silent)
+        {
+            try
+            {
+                ClockingEvent ce = new ClockingEvent() { UserNameID = 1198, FieldTime = DateTime.Now };
+                string apiResponse = string.Empty;
+                apiResponse = JsonConvert.SerializeObject(
+                    CoreAPI.PostClockingRecord(CoreAPI.GetClockingPayload(ce), CoreAPI.Authenticate().Token), 
+                    Formatting.Indented);
+                log.Debug($"TestApiPost - API Response: {apiResponse}");
+            }
+            catch (Exception ex)
+            {
+                log.Debug($"TestApiPost encountered an exception: {ex.ToString()}");
                 if (silent == false)
                 {
                     Console.ReadLine();

@@ -76,10 +76,11 @@ namespace Lyca2CoreHrApiTask.DAL
                 request.AddHeader("cache-control", "no-cache");
                 request.AddHeader("authorization", $"Bearer {token.access_token}");
                 request.AddHeader("content-type", "application/json");
-                //@TODO: fill in actual data 
+                //@TODO: fill in actual data if using inline data construction
                 request.AddParameter(
                     "application/json", 
-                    "{\r\n\"person\" : \"\", \r\n\"badge_no\": \"1198\", \r\n\"clock_date_time\" : \"2017-07-18 08:56 +00:00\",\r\n\"record_type\"     : \"B0\", \r\n\"function_code\"   : \"\", \r\n\"function_value\"  : \"\",  \r\n\"device_id\"       : \"\"\r\n}", 
+                    //"{\r\n\"person\" : \"\", \r\n\"badge_no\": \"1198\", \r\n\"clock_date_time\" : \"2017-07-18 08:56 +00:00\",\r\n\"record_type\"     : \"B0\", \r\n\"function_code\"   : \"\", \r\n\"function_value\"  : \"\",  \r\n\"device_id\"       : \"\"\r\n}", 
+                    data,
                     ParameterType.RequestBody);
                 IRestResponse response = client.Execute(request);
 
@@ -99,7 +100,7 @@ namespace Lyca2CoreHrApiTask.DAL
 
         public BearerTokenInfo Authenticate()
         {
-            log.Info($"Attempting to aquire bearer token from CoreHR API.");
+            log.Info($"Attempting to acquire bearer token from CoreHR API.");
             BearerTokenInfo tokenInfo;
             try
             {
@@ -116,7 +117,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 //Store token
                 tokenInfo = new BearerTokenInfo(JsonConvert.DeserializeObject<BearerToken>(response.Content), DateTime.UtcNow);
 
-                log.Info($"Token: {response.Content}");
+                log.Info($"Authentication response: {response.Content}");
                 return tokenInfo; 
             }
             catch (Exception ex)
