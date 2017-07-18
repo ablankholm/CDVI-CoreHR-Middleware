@@ -64,9 +64,9 @@ namespace Lyca2CoreHrApiTask.Resilience
             **/
             Policy cdviDbPolicy = Policy.Wrap(cdviDbTimeoutPolicy, cdviDbRetryPolicy);
 
-            /** Resilience policiy for contacting the CDVi database:
+            /** Resilience policiy for posting to the CoreHR clocking API:
              * 
-             * Combines the CDVI database retry and timeout policies into a single policy for convenience.
+             * Basic retry policy meant to handle network microfaults.
             **/
             Policy apiRecordPostingPolicy = Policy.Handle<Exception>().Retry(3);
 

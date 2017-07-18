@@ -9,6 +9,10 @@ using Lyca2CoreHrApiTask.Resilience;
 using NLog;
 using ServiceStack;
 using Newtonsoft.Json;
+using Polly;
+using Polly.Registry;
+using Polly.Retry;
+using RestSharp;
 
 namespace Lyca2CoreHrApiTask.DAL
 {
@@ -16,15 +20,42 @@ namespace Lyca2CoreHrApiTask.DAL
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
         public LycaPolicyRegistry Policies { get; set; } = new LycaPolicyRegistry();
-        private string bearerToken = string.Empty;
+        private BearerTokenInfo authToken = new BearerTokenInfo();
+
 
 
         public void PostClockingRecordBatch(ref List<ClockingEvent> batch)
         {
+            var settings = Properties.Settings.Default;
             try
             {
-                Queue<ClockingEvent> PostingQueue = new Queue<ClockingEvent>(batch);
-                
+                authToken = Authenticate();
+
+
+                foreach (var record in batch)
+                {
+                    if (authToken.WillExpireWithin(settings.CoreHrApiTokenExpiryTolerance))
+                    {
+                        log.Info($"Token expiring within {settings.CoreHrApiTokenExpiryTolerance} seconds, re-authenticating...");
+                        authToken = Authenticate();
+                    }
+                    try
+                    {
+                        Policies.Get<Policy>("apiRecordPostingPolicy").Execute(() => 
+                        {
+                            //Post clocking record to API
+                            PostClockingRecord(GetClockingPayload(record), authToken.Token);
+                        });
+                        //If we got this far, post should have succeeded, remove record from queue
+                        batch.Remove(record);
+                    }
+                    catch (Exception)
+                    {
+                        //Catch used here for resilence only, i.e. skip to next record if posting to API unsuccessful
+                        //Logging exceptions here would inflate the log, app state will retain unsucccesful records.
+                        continue;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -34,15 +65,25 @@ namespace Lyca2CoreHrApiTask.DAL
         }
 
 
-        public HttpStatusCode? PostClockingRecord(string data)
+
+        public HttpStatusCode? PostClockingRecord(string data, BearerToken token)
         {
             HttpStatusCode? status;
             try
             {
-                //@TODO: Change to actual API endpoint
-                string endpoint = @"http://httpbin.org/get";
+                var client = new RestClient("https://uatapi.corehr.com/ws/lycau/corehr/v1/clocking/user/");
+                var request = new RestRequest(Method.POST);
+                request.AddHeader("cache-control", "no-cache");
+                request.AddHeader("authorization", $"Bearer {token.access_token}");
+                request.AddHeader("content-type", "application/json");
+                //@TODO: fill in actual data 
+                request.AddParameter(
+                    "application/json", 
+                    "{\r\n\"person\" : \"\", \r\n\"badge_no\": \"1198\", \r\n\"clock_date_time\" : \"2017-07-18 08:56 +00:00\",\r\n\"record_type\"     : \"B0\", \r\n\"function_code\"   : \"\", \r\n\"function_value\"  : \"\",  \r\n\"device_id\"       : \"\"\r\n}", 
+                    ParameterType.RequestBody);
+                IRestResponse response = client.Execute(request);
 
-                return endpoint.PostJsonToUrl(data).GetResponseStatus();
+                return response.StatusCode;
             }
             catch (Exception ex)
             {
@@ -50,32 +91,44 @@ namespace Lyca2CoreHrApiTask.DAL
                 string responseBody = ex.GetResponseBody();
 
                 log.Fatal($"Encountered an error while posting to CoreHR API: {ex}. Response: {responseBody}.");
-
-                return status;
+                throw;
             } 
         }
 
 
-        public HttpStatusCode? Authenticate()
+
+        public BearerTokenInfo Authenticate()
         {
-            HttpStatusCode? status;
+            log.Info($"Attempting to aquire bearer token from CoreHR API.");
+            BearerTokenInfo tokenInfo;
             try
             {
-                //@TODO: Change to actual API endpoint
-                string endpoint = @"http://httpbin.org/get";
+                //Get token
+                var settings    = Properties.Settings.Default;
+                var client      = new RestClient(settings.CoreHrApiOAuthTokenEndpoint);
+                var request     = new RestRequest(Method.POST);
+                request.AddHeader("cache-control", "no-cache");
+                request.AddHeader("content-type", "application/x-www-form-urlencoded");
+                request.AddHeader("authorization", $"Basic {settings.CoreHrApiBase64EncodedAppCredentials}");
+                request.AddParameter("application/x-www-form-urlencoded", "grant_type=client_credentials", ParameterType.RequestBody);
+                IRestResponse response = client.Execute(request);
 
+                //Store token
+                tokenInfo = new BearerTokenInfo(JsonConvert.DeserializeObject<BearerToken>(response.Content), DateTime.UtcNow);
 
+                log.Info($"Token: {response.Content}");
+                return tokenInfo; 
             }
             catch (Exception ex)
             {
-                status = ex.GetStatus();
-                string responseBody = ex.GetResponseBody();
+                HttpStatusCode? status          = ex.GetStatus();
+                string          responseBody    = ex.GetResponseBody();
 
                 log.Fatal($"Encountered an error while authenticating to CoreHR API: {ex}. Response: {responseBody}.");
-
-                return status;
+                throw;
             }
         }
+
 
 
         public string GetClockingPayload(ClockingEvent clockingEvent)

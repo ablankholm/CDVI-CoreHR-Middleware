@@ -14,6 +14,11 @@ using Polly;
 using Polly.Retry;
 using Polly.Registry;
 using Lyca2CoreHrApiTask.Resilience;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using RestSharp;
+using System.Net;
 
 namespace Lyca2CoreHrApiTask
 {
@@ -24,7 +29,7 @@ namespace Lyca2CoreHrApiTask
         private ApplicationState    state       = new ApplicationState();
         private LycaPolicyRegistry  policies    = new LycaPolicyRegistry();
         private CDVIRepository      CDVI        = new CDVIRepository();
-        private CoreHrApi           CoreAPI     = new CoreHrApi(); 
+        private CoreHrApi           CoreAPI     = new CoreHrApi();
 
 
         public Program()
@@ -39,6 +44,7 @@ namespace Lyca2CoreHrApiTask
             Application.ThreadException                 += new ThreadExceptionEventHandler(OnUnhandledThreadException);
             AppDomain.CurrentDomain.UnhandledException  += new UnhandledExceptionEventHandler(OnUnhandledException);
             Program app = new Program();
+            //ServicePointManager.UseNagleAlgorithm = false; Uncomment if http request performance becoems an issue
 
             //Wrap specific exceptions
             try
@@ -101,6 +107,9 @@ namespace Lyca2CoreHrApiTask
                                     break;
                                 case "TestHttpPost":
                                     app.TestHttpPost(silentTesting);
+                                    break;
+                                case "TestApiAuthentication":
+                                    app.TestApiAuthentication(silentTesting);
                                     break;
                                 default:
                                     app.Test(silentTesting);
@@ -498,6 +507,39 @@ namespace Lyca2CoreHrApiTask
             catch (Exception ex)
             {
                 log.Debug($"TestHttpPost encountered an exception: {ex.ToString()}");
+                if (silent == false)
+                {
+                    Console.ReadLine();
+                }
+                throw;
+            }
+            if (silent == false)
+            {
+                Console.ReadLine();
+            }
+        }
+
+        //@TempTesting (refactor out to a dedicated testing module)
+        async void TestApiAuthentication(bool silent)
+        {
+            try
+            {
+                //var settings = Properties.Settings.Default;
+                //var client = new RestClient(settings.CoreHrApiOAuthTokenEndpoint);
+                //var request = new RestRequest(Method.POST);
+                //request.AddHeader("cache-control", "no-cache");
+                //request.AddHeader("content-type", "application/x-www-form-urlencoded");
+                //request.AddHeader("authorization", $"Basic {settings.CoreHrApiBase64EncodedAppCredentials}");
+                //request.AddParameter("application/x-www-form-urlencoded", "grant_type=client_credentials", ParameterType.RequestBody);
+                //IRestResponse response = client.Execute(request);
+
+                //BearerToken bearerToken = JsonConvert.DeserializeObject<BearerToken>(response.Content);
+                
+                log.Debug($"API Response: {JsonConvert.SerializeObject(CoreAPI.Authenticate().Token, Formatting.Indented)}");
+            }
+            catch (Exception ex)
+            {
+                log.Debug($"TestGetBearerToken encountered an exception: {ex.ToString()}");
                 if (silent == false)
                 {
                     Console.ReadLine();

@@ -50,6 +50,9 @@
     <StartupObject>Lyca2CoreHrApiTask.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="JsonFx, Version=2.0.1209.2802, Culture=neutral, PublicKeyToken=315052dd637f8a52, processorArchitecture=MSIL">
+      <HintPath>..\packages\JsonFx.2.0.1209.2802\lib\net40\JsonFx.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Extensions.CommandLineUtils, Version=1.1.1.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Extensions.CommandLineUtils.1.1.1\lib\net451\Microsoft.Extensions.CommandLineUtils.dll</HintPath>
     </Reference>
@@ -64,6 +67,9 @@
     </Reference>
     <Reference Include="Polly, Version=5.2.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Polly.5.2.0\lib\net45\Polly.dll</HintPath>
+    </Reference>
+    <Reference Include="RestSharp, Version=105.2.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RestSharp.105.2.3\lib\net452\RestSharp.dll</HintPath>
     </Reference>
     <Reference Include="ServiceStack.Text, Version=4.5.12.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\ServiceStack.Text.4.5.12\lib\net45\ServiceStack.Text.dll</HintPath>
@@ -85,6 +91,10 @@
   <ItemGroup>
     <Compile Include="DAL\CDVIRepository.cs" />
     <Compile Include="DAL\CoreHrApi.cs" />
+    <Compile Include="Models\BearerToken.cs" />
+    <Compile Include="Models\BearerTokenInfo.cs" />
+    <Compile Include="Models\BearerTokenRequest.cs" />
+    <Compile Include="Models\ClockingPayload.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -96,7 +106,6 @@
     <Compile Include="Models\ExitCode.cs" />
     <Compile Include="Models\LogLevel.cs" />
     <Compile Include="Models\ProcessingState.cs" />
-    <Compile Include="Models\ClockingPayload.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

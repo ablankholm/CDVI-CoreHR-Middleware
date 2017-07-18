@@ -31,5 +31,32 @@ namespace Lyca2CoreHrApiTask.Properties {
                 return ((global::System.TimeSpan)(this["CdviDbTimeout"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://uatapi.corehr.com/ws/lycau/corehr/oauth/token")]
+        public string CoreHrApiOAuthTokenEndpoint {
+            get {
+                return ((string)(this["CoreHrApiOAuthTokenEndpoint"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("ZWhWRE1NLU5jTnVaNkV2WkYwenpBZy4uOlo2emNlQ0stU3dzaW9xNUU0VzlEQXcuLg==")]
+        public string CoreHrApiBase64EncodedAppCredentials {
+            get {
+                return ((string)(this["CoreHrApiBase64EncodedAppCredentials"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        public int CoreHrApiTokenExpiryTolerance {
+            get {
+                return ((int)(this["CoreHrApiTokenExpiryTolerance"]));
+            }
+        }
     }
 }
