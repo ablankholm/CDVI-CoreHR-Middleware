@@ -112,6 +112,82 @@ namespace Lyca2CoreHrApiTask.DAL
 
 
 
+        public List<ClockingEvent> GetEvents(int fromEventId)
+        {
+            try
+            {
+                List<ClockingEvent> events = new List<ClockingEvent>();
+                string query = eventsBaseQuery + $"WHERE [Event ID] > {fromEventId}";
+
+
+
+                log.Info($"GetEvents(fromEventId: {fromEventId}) executing query : {query}");
+                Policies.Get<Policy>("cdviDbPolicy").Execute(() =>
+                {
+                    using (var conn = new SqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        using (IDatabase db = new Database(conn))
+                        {
+                            var result = db.Fetch<ClockingEvent>(query);
+                            events = result;
+                        }
+                        conn.Close();
+                    }
+                });
+
+
+
+                return events;
+            }
+            catch (Exception ex)
+            {
+                log.Fatal($"Failed to retrieve records from database (exception encountered: {ex}).");
+                throw;
+            }
+        }
+
+
+
+        public List<ClockingEvent> GetEvents(int fromEventId, List<int> eventTypes)
+        {
+            try
+            {
+                List<ClockingEvent> events = new List<ClockingEvent>();
+                string EventTypes = String.Join(",", eventTypes);
+                string query = eventsBaseQuery + $"WHERE [Event ID] > {fromEventId}"
+                                                + $"AND [Event Type] IN ({EventTypes})";
+
+
+
+                log.Info($"GetEvents(fromEventId: {fromEventId}, eventTypes: {EventTypes}) executing query : {query}");
+                Policies.Get<Policy>("cdviDbPolicy").Execute(() =>
+                {
+                    using (var conn = new SqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        using (IDatabase db = new Database(conn))
+                        {
+                            var result = db.Fetch<ClockingEvent>(query);
+                            events = result;
+                        }
+                        conn.Close();
+                    }
+                });
+
+
+
+                return events;
+            }
+            catch (Exception ex)
+            {
+                log.Fatal($"Failed to retrieve records from database (exception encountered: {ex}).");
+                throw;
+            }
+        }
+
+
+
         public List<ClockingEvent> GetEvents(DateTime from, DateTime to, List<int> eventTypes)
         {
             try
@@ -202,7 +278,6 @@ namespace Lyca2CoreHrApiTask.DAL
         {
             return GetEvents(from, to, new List<int> { 1280, 1288, 1313 });
         }
-
 
 
         public List<ClockingEvent> GetEventsByUsers(DateTime from, DateTime to, List<int> eventTypes, List<int> userIDs)
