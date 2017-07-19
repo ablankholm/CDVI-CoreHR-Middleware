@@ -24,7 +24,7 @@ namespace Lyca2CoreHrApiTask.DAL
 
 
 
-        public void PostClockingRecordBatch(ref List<ClockingEvent> batch)
+        public void PostClockingRecordBatch(ref List<ClockingEvent> batch, ref int lastSuccessfulRecord)
         {
             var settings = Properties.Settings.Default;
             try
@@ -46,7 +46,8 @@ namespace Lyca2CoreHrApiTask.DAL
                             //Post clocking record to API
                             PostClockingRecord(GetClockingPayload(record), authToken.Token);
                         });
-                        //If we got this far, post should have succeeded, remove record from queue
+                        //If we got this far, post should have succeeded, update processing state and remove record from queue
+                        lastSuccessfulRecord = record.EventID;
                         batch.Remove(record);
                     }
                     catch (Exception)
