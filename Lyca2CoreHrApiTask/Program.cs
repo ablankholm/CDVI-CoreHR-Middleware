@@ -154,10 +154,14 @@ namespace Lyca2CoreHrApiTask
             {
                 //Restore from previous runs
                 LoadState(appPath + @"\App_Data\state.txt");
-                //Post backlog (previously unsuccesful posts)
-                //CoreAPI.PostClockingRecordBatch(ref state.ProcessingState.PendingRecords);
-                //TODO: Post new records
-
+                //Add new records to any records left over from previous runs
+                List<int> eventTypes = new List<int> { 1280, 1288, 1313 };
+                state.ProcessingState.PendingRecords.AddRange(
+                    CDVI.GetEvents(
+                        state.ProcessingState.LastSuccessfulRecord, 
+                        eventTypes));
+                //Post all pending records
+                CoreAPI.PostClockingRecordBatch(ref state.ProcessingState.PendingRecords, ref state.ProcessingState.LastSuccessfulRecord);
             }
             catch (Exception ex)
             {
@@ -549,7 +553,7 @@ namespace Lyca2CoreHrApiTask
         {
             try
             {
-                ClockingEvent ce = new ClockingEvent() { UserNameID = 1198, FieldTime = DateTime.Now };
+                ClockingEvent ce = new ClockingEvent() { UserNameID = 1192, FieldTime = DateTime.Now };
                 string apiResponse = string.Empty;
                 apiResponse = JsonConvert.SerializeObject(
                     CoreAPI.PostClockingRecord(CoreAPI.GetClockingPayload(ce), CoreAPI.Authenticate().Token), 
