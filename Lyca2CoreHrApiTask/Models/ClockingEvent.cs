@@ -30,7 +30,7 @@ namespace Lyca2CoreHrApiTask.Models
         public int RecordNameID { get; set; }
         [Column("Site Name ID")]
         public int SiteNameID { get; set; }
-        [Column("UserNameID")]
-        public int UserNameID { get; set; }
+        [Column("UserID")]
+        public int UserID { get; set; }
     }
 }

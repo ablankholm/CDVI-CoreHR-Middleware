@@ -145,7 +145,7 @@ namespace Lyca2CoreHrApiTask.DAL
             string timeZoneOffset = "+00:00";
             ClockingPayload cp = new ClockingPayload()
             {
-                badge_no = clockingEvent.UserNameID.ToString(),
+                badge_no = clockingEvent.UserID.ToString(),
                 clock_date_time = clockingEvent.FieldTime.ToString($"yyyy-MM-dd HH:mm {timeZoneOffset}"),
                 record_type = "B0", 
                 device_id = clockingEvent.OperatorID.ToString()

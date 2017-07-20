@@ -30,18 +30,19 @@ namespace Lyca2CoreHrApiTask.DAL
     {
         private static Logger log                   = LogManager.GetCurrentClassLogger();
         private static string connectionString      = ConfigurationManager.AppSettings["CDVI:ConnectionString"];
-        private static string eventsBaseQuery = @"SELECT  [Event ID]
-                                                            ,[Event Type]
-                                                            ,[Field Time]
-                                                            ,[Logged Time]
-                                                            ,[Operator ID]
-                                                            ,[Card Holder ID]
-                                                            ,[Record Name ID]
-                                                            ,[Site Name ID]
-                                                            ,[Centaur3Events].[dbo].[UserNames].[UserID] AS UserNameID 
-                                                FROM[Centaur3Events].[dbo].[Events]
-                                                JOIN[Centaur3Events].[dbo].[UserNames]
-                                                ON[Centaur3Events].[dbo].[Events].[UserNameID] = [Centaur3Events].[dbo].[UserNames].[UserNameID] ";
+        private static string eventsBaseQuery = 
+            @"SELECT  [Event ID]
+                        ,[Event Type]
+                        ,[Field Time]
+                        ,[Logged Time]
+                        ,[Operator ID]
+                        ,[Card Holder ID]
+                        ,[Record Name ID]
+                        ,[Site Name ID]
+                        ,[Centaur3Events].[dbo].[UserNames].[UserID] AS UserID 
+            FROM[Centaur3Events].[dbo].[Events]
+            JOIN[Centaur3Events].[dbo].[UserNames]
+            ON[Centaur3Events].[dbo].[Events].[UserNameID] = [Centaur3Events].[dbo].[UserNames].[UserNameID] ";
         public LycaPolicyRegistry Policies { get; set; } = new LycaPolicyRegistry();
 
 
@@ -157,6 +158,89 @@ namespace Lyca2CoreHrApiTask.DAL
                 throw;
             }
         }
+
+
+
+        public List<ClockingEvent> GetEventsByDate(DateTime date, List<int> eventTypes)
+        {
+            try
+            {
+                List<ClockingEvent> events = new List<ClockingEvent>();
+                DateTime startOfDate = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, 0);
+                DateTime endOfDate = new DateTime(date.Year, date.Month, date.Day, 23, 59, 59, 999);
+                string From = startOfDate.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                string To = endOfDate.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                string EventTypes = String.Join(",", eventTypes);
+                string query = eventsBaseQuery + $"WHERE ([Field Time] BETWEEN CONVERT(datetime, '{From}') AND CONVERT(datetime, '{To}')) "
+                                               + $"AND [Event Type] IN ({EventTypes}) ";
+
+
+
+                log.Info($"GetEvents(date: {date}, eventTypes: {EventTypes}) executing query : {query}");
+                Policies.Get<Policy>("cdviDbPolicy").Execute(() =>
+                {
+                    using (var conn = new SqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        using (IDatabase db = new Database(conn))
+                        {
+                            var result = db.Fetch<ClockingEvent>(query);
+                            events = result;
+                        }
+                        conn.Close();
+                    }
+                });
+
+
+
+                return events;
+            }
+            catch (Exception ex)
+            {
+                log.Fatal($"Failed to retrieve records from database (exception encountered: {ex}).");
+                throw;
+            }
+        }
+
+
+
+        public List<ClockingEvent> GetEventsByUser(int userId, List<int> eventTypes)
+        {
+            try
+            {
+                List<ClockingEvent> events = new List<ClockingEvent>();
+                string EventTypes = String.Join(",", eventTypes);
+                string query = eventsBaseQuery + $"WHERE [UserID] = {userId} "
+                                                + $"AND [Event Type] IN ({EventTypes}) ";
+
+
+
+                log.Info($"GetEvents(userId: {userId}, eventTypes: {EventTypes}) executing query : {query}");
+                Policies.Get<Policy>("cdviDbPolicy").Execute(() =>
+                {
+                    using (var conn = new SqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        using (IDatabase db = new Database(conn))
+                        {
+                            var result = db.Fetch<ClockingEvent>(query);
+                            events = result;
+                        }
+                        conn.Close();
+                    }
+                });
+
+
+
+                return events;
+            }
+            catch (Exception ex)
+            {
+                log.Fatal($"Failed to retrieve records from database (exception encountered: {ex}).");
+                throw;
+            }
+        }
+
 
 
         /** Depreciated

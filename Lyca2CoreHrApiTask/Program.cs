@@ -325,7 +325,7 @@ namespace Lyca2CoreHrApiTask
         {
             List<ClockingEvent> el = new List<ClockingEvent>();
             ClockingEvent e = new ClockingEvent();
-            List<int> eventIDs = new List<int> { 9999, 12999 };
+            List<int> eventIDs = new List<int> { 996868, 2998 };
             int eventID = 1434381;
             DateTime today = DateTime.Today;
             DateTime from = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0, 0);
@@ -337,7 +337,17 @@ namespace Lyca2CoreHrApiTask
             //Test repository methods
             el = CDVI.GetEvents(eventIDs);
             e = el.FirstOrDefault();
-            log.Debug($"Test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserNameID: {e.UserNameID} ]");
+            log.Debug($"Test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserID: {e.UserID} ]");
+            el.Clear();
+
+            el = CDVI.GetEventsByUser(userIDs.First(), accessEventTypes);
+            e = el.FirstOrDefault();
+            log.Debug($"Test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserID: {e.UserID} ]");
+            el.Clear();
+
+            el = CDVI.GetEventsByDate(from, accessEventTypes);
+            e = el.FirstOrDefault();
+            log.Debug($"Test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserID: {e.UserID} ]");
             el.Clear();
 
 
@@ -398,7 +408,7 @@ namespace Lyca2CoreHrApiTask
         {
             try
             {
-                ClockingEvent cp = new ClockingEvent() { UserNameID = 9001 };
+                ClockingEvent cp = new ClockingEvent() { UserID = 9001 };
                 string payload = JsonConvert.SerializeObject(cp);
                 string result = @"http://httpbin.org/post".PostJsonToUrl(payload);
                 log.Debug($"TestHttpPost: Response = {result}");
@@ -445,7 +455,7 @@ namespace Lyca2CoreHrApiTask
         {
             try
             {
-                ClockingEvent ce = new ClockingEvent() { UserNameID = 1192, FieldTime = DateTime.Now };
+                ClockingEvent ce = new ClockingEvent() { UserID = 1192, FieldTime = DateTime.Now };
                 string apiResponse = string.Empty;
                 apiResponse = JsonConvert.SerializeObject(
                     CoreAPI.PostClockingRecord(CoreAPI.GetClockingPayload(ce), CoreAPI.Authenticate().Token), 
