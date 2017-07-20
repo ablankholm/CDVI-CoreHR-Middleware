@@ -148,7 +148,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 badge_no = clockingEvent.UserID.ToString(),
                 clock_date_time = clockingEvent.FieldTime.ToString($"yyyy-MM-dd HH:mm {timeZoneOffset}"),
                 record_type = "B0", 
-                device_id = clockingEvent.OperatorID.ToString()
+                device_id = clockingEvent.RecordNameID.ToString()
             };
 
             return JsonConvert.SerializeObject(cp, Formatting.Indented);
