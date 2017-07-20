@@ -12,6 +12,7 @@ namespace Lyca2CoreHrApiTask.Models
         UnhandledException          = 3,
         UnhandledThreadException    = 4,
         CleanupAndExitFailed        = 5,
-        StarOrResumeFailed          = 6
+        StarOrResumeFailed          = 6,
+        InvalidTestName             = 7
     }
 }

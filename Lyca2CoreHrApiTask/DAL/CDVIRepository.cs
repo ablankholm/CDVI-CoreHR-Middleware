@@ -30,8 +30,18 @@ namespace Lyca2CoreHrApiTask.DAL
     {
         private static Logger log                   = LogManager.GetCurrentClassLogger();
         private static string connectionString      = ConfigurationManager.AppSettings["CDVI:ConnectionString"];
-        private static string eventsBaseQuery       = $"SELECT  [Event ID],[Event Type],[Field Time],[Logged Time],[Operator ID],[Card Holder ID],[Record Name ID],[Site Name ID],[UserNameID] "
-                                                    + $"FROM [Centaur3Events].[dbo].[Events] ";
+        private static string eventsBaseQuery = @"SELECT  [Event ID]
+                                                            ,[Event Type]
+                                                            ,[Field Time]
+                                                            ,[Logged Time]
+                                                            ,[Operator ID]
+                                                            ,[Card Holder ID]
+                                                            ,[Record Name ID]
+                                                            ,[Site Name ID]
+                                                            ,[Centaur3Events].[dbo].[UserNames].[UserID] AS UserNameID 
+                                                FROM[Centaur3Events].[dbo].[Events]
+                                                JOIN[Centaur3Events].[dbo].[UserNames]
+                                                ON[Centaur3Events].[dbo].[Events].[UserNameID] = [Centaur3Events].[dbo].[UserNames].[UserNameID] ";
         public LycaPolicyRegistry Policies { get; set; } = new LycaPolicyRegistry();
 
 
@@ -42,49 +52,11 @@ namespace Lyca2CoreHrApiTask.DAL
             {
                 List<ClockingEvent> events = new List<ClockingEvent>();
                 string EventIDs = String.Join(",", eventIDs);
-                string query    = eventsBaseQuery + $"WHERE [Event ID] IN ({EventIDs})";
+                string query    = eventsBaseQuery + $"WHERE [Event ID] IN ({EventIDs}) ";
 
 
 
                 log.Info($"GetEvents(eventIDs: {EventIDs}) executing query : {query}");
-                Policies.Get<Policy>("cdviDbPolicy").Execute(() => 
-                {
-                    using (var conn = new SqlConnection(connectionString))
-                    {
-                        conn.Open();
-                        using (IDatabase db = new Database(conn))
-                        {
-                            var result = db.Fetch<ClockingEvent>(query);
-                            events = result;
-                        }
-                        conn.Close();
-                    }
-                });
-
-
-
-                return events;
-            }
-            catch (Exception ex)
-            {
-                log.Fatal($"Failed to retrieve records from database (exception encountered: {ex}).");
-                throw;
-            }
-        }
-
-
-
-        public List<ClockingEvent> GetEvents(int fromEventId, Cardinality toEndOfTable = Cardinality.Ascending)
-        {
-            try
-            {
-                List<ClockingEvent> events  = new List<ClockingEvent>();
-                string              opStr   = (toEndOfTable == Cardinality.Descending) ? @">=" : "<=";
-                string              query   = eventsBaseQuery + $"WHERE [Event ID] {opStr} {fromEventId}";
-
-
-
-                log.Info($"GetEvents(fromEventId: {fromEventId}, toEndOfTable: {toEndOfTable.ToString()}) executing query : {query}");
                 Policies.Get<Policy>("cdviDbPolicy").Execute(() => 
                 {
                     using (var conn = new SqlConnection(connectionString))
@@ -117,7 +89,7 @@ namespace Lyca2CoreHrApiTask.DAL
             try
             {
                 List<ClockingEvent> events = new List<ClockingEvent>();
-                string query = eventsBaseQuery + $"WHERE [Event ID] > {fromEventId}";
+                string query = eventsBaseQuery + $"WHERE [Event ID] > {fromEventId} ";
 
 
 
@@ -155,8 +127,8 @@ namespace Lyca2CoreHrApiTask.DAL
             {
                 List<ClockingEvent> events = new List<ClockingEvent>();
                 string EventTypes = String.Join(",", eventTypes);
-                string query = eventsBaseQuery + $"WHERE [Event ID] > {fromEventId}"
-                                                + $"AND [Event Type] IN ({EventTypes})";
+                string query = eventsBaseQuery + $"WHERE [Event ID] > {fromEventId} "
+                                                + $"AND [Event Type] IN ({EventTypes}) ";
 
 
 
@@ -187,7 +159,7 @@ namespace Lyca2CoreHrApiTask.DAL
         }
 
 
-
+        /** Depreciated
         public List<ClockingEvent> GetEvents(DateTime from, DateTime to, List<int> eventTypes)
         {
             try
@@ -198,7 +170,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 string              EventTypes  = String.Join(",", eventTypes);
                 string              query       = eventsBaseQuery
                                                     + $"WHERE ([Field Time] BETWEEN CONVERT(datetime, '{From}') AND CONVERT(datetime, '{To}')) "
-                                                    + $"AND [Event Type] IN ({EventTypes})";
+                                                    + $"AND [Event Type] IN ({EventTypes}) ";
 
 
 
@@ -228,8 +200,6 @@ namespace Lyca2CoreHrApiTask.DAL
             }
         }
 
-
-
         public List<ClockingEvent> GetEvents(DateTime from, DateTime to, List<int> eventTypes, List<int> userIDs)
         {
             try
@@ -242,7 +212,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 string              query       = eventsBaseQuery
                                                     + $"WHERE ([Field Time] BETWEEN CONVERT(datetime, '{From}') AND CONVERT(datetime, '{To}')) "
                                                     + $"AND [Event Type] IN ({EventTypes}) "
-                                                    + $"AND [UserNameID] IN ({UserIDs})";
+                                                    + $"AND [UserNameID] IN ({UserIDs}) ";
 
 
 
@@ -272,17 +242,15 @@ namespace Lyca2CoreHrApiTask.DAL
             }
         }
 
-
-
         public List<ClockingEvent> GetAccessEvents(DateTime from, DateTime to)
         {
             return GetEvents(from, to, new List<int> { 1280, 1288, 1313 });
         }
 
-
         public List<ClockingEvent> GetEventsByUsers(DateTime from, DateTime to, List<int> eventTypes, List<int> userIDs)
         {
             return GetEvents(from, to, eventTypes, userIDs);
         }
+        **/
     }
 }

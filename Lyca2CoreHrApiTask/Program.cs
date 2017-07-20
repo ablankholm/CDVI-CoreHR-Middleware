@@ -96,9 +96,6 @@ namespace Lyca2CoreHrApiTask
                                 case "TestDB":
                                     app.TestDB(silentTesting);
                                     break;
-                                case "TestDBWithLocalWrite":
-                                    app.TestDBWithLocalWrite(silentTesting);
-                                    break;
                                 case "TestAppState":
                                     app.TestAppState(silentTesting);
                                     break;
@@ -115,7 +112,7 @@ namespace Lyca2CoreHrApiTask
                                     app.TestApiPost(silentTesting);
                                     break;
                                 default:
-                                    app.Test(silentTesting);
+                                    LogExit(ExitCode.InvalidTestName, Models.LogLevel.Debug);
                                     break;
                             }
                         }
@@ -322,62 +319,6 @@ namespace Lyca2CoreHrApiTask
             Environment.Exit((int)exitCode);
         }
 
-        //@TempTesting (refactor out to a dedicated testing module)
-        void Test(bool silent)
-        {
-            List<ClockingEvent> el = new List<ClockingEvent>();
-            ClockingEvent e = new ClockingEvent();
-            List<int> eventIDs = new List<int> { 9999, 12999 };
-            int eventID = 1434381;
-            DateTime today = DateTime.Today;
-            DateTime from = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0, 0);
-            DateTime to = new DateTime(today.Year, today.Month, today.Day, 23, 59, 59, 999);
-            List<int> accessEventTypes = new List<int>() { 1280, 1288, 1313 };
-            List<int> userIDs = new List<int>() { 176, 138 };
-
-
-            //Test repository methods
-            el = CDVI.GetEvents(eventIDs);
-            e = el.FirstOrDefault();
-            log.Debug($"Test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserNameID: {e.UserNameID}]");
-            el.Clear();
-
-            /**
-            el = CDVI.GetEvents(eventID, Cardinality.Ascending);
-            e = el.FirstOrDefault();
-            log.Debug($"Test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserNameID: {e.UserNameID}]");
-            el.Clear();
-
-
-            el = CDVI.GetEvents(from, to, accessEventTypes);
-            e = el.FirstOrDefault();
-            log.Debug($"test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserNameID: {e.UserNameID}]");
-            el.Clear();
-            **/
-
-
-            el = CDVI.GetEvents(from, to, accessEventTypes, userIDs);
-            e = el.FirstOrDefault();
-            log.Debug($"Test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserNameID: {e.UserNameID}]");
-            el.Clear();
-
-
-            //Test file output
-            List<ClockingEvent> events = new List<ClockingEvent>();
-            events = CDVI.GetEvents(from, to, accessEventTypes, userIDs);
-            e = events.FirstOrDefault();
-            string eventOutput = $"Test - UserID: {e.UserNameID.ToString()}" + $" Count: {events.Count.ToString()}" + $" TimeStamp: {e.FieldTime.ToString()}";
-            Console.WriteLine(eventOutput);
-            log.Info(eventOutput);
-            if (silent == false)
-            {
-                Console.ReadLine();
-            }
-
-
-            string json = JsonConvert.SerializeObject(events.ToArray(), Formatting.Indented);
-            System.IO.File.WriteAllText(appPath + @"\App_Data\test.txt", json);
-        }
 
         //@TempTesting (refactor out to a dedicated testing module)
         void TestDB(bool silent)
@@ -390,32 +331,13 @@ namespace Lyca2CoreHrApiTask
             DateTime from = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0, 0);
             DateTime to = new DateTime(today.Year, today.Month, today.Day, 23, 59, 59, 999);
             List<int> accessEventTypes = new List<int>() { 1280, 1288, 1313 };
-            List<int> userIDs = new List<int>() { 176, 138 };
+            List<int> userIDs = new List<int>() { 1192 };
 
 
             //Test repository methods
             el = CDVI.GetEvents(eventIDs);
             e = el.FirstOrDefault();
-            log.Debug($"Test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserNameID: {e.UserNameID}]");
-            el.Clear();
-
-            /**
-            el = CDVI.GetEvents(eventID, Cardinality.Ascending);
-            e = el.FirstOrDefault();
-            log.Debug($"Test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserNameID: {e.UserNameID}]");
-            el.Clear();
-
-
-            el = CDVI.GetEvents(from, to, accessEventTypes);
-            e = el.FirstOrDefault();
-            log.Debug($"test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserNameID: {e.UserNameID}]");
-            el.Clear();
-            **/
-
-
-            el = CDVI.GetEvents(from, to, accessEventTypes, userIDs);
-            e = el.FirstOrDefault();
-            log.Debug($"Test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserNameID: {e.UserNameID}]");
+            log.Debug($"Test - Count: {el.Count}, First Record[ EventID: {e.EventID}, EventType: {e.EventType}, FieldTime: {e.FieldTime}, UserNameID: {e.UserNameID} ]");
             el.Clear();
 
 
@@ -423,36 +345,6 @@ namespace Lyca2CoreHrApiTask
             {
                 Console.ReadLine();
             }
-        }
-
-        //@TempTesting (refactor out to a dedicated testing module)
-        void TestDBWithLocalWrite(bool silent)
-        {
-            List<ClockingEvent> el = new List<ClockingEvent>();
-            ClockingEvent e = new ClockingEvent();
-            List<int> eventIDs = new List<int> { 9999, 12999 };
-            int eventID = 1434381;
-            DateTime today = DateTime.Today;
-            DateTime from = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0, 0);
-            DateTime to = new DateTime(today.Year, today.Month, today.Day, 23, 59, 59, 999);
-            List<int> accessEventTypes = new List<int>() { 1280, 1288, 1313 };
-            List<int> userIDs = new List<int>() { 176, 138 };
-
-            //Test file output
-            List<ClockingEvent> events = new List<ClockingEvent>();
-            events = CDVI.GetEvents(from, to, accessEventTypes, userIDs);
-            e = events.FirstOrDefault();
-            string eventOutput = $"Test - UserID: {e.UserNameID.ToString()}" + $" Count: {events.Count.ToString()}" + $" TimeStamp: {e.FieldTime.ToString()}";
-            Console.WriteLine(eventOutput);
-            log.Info(eventOutput);
-            if (silent == false)
-            {
-                Console.ReadLine();
-            }
-
-
-            string json = JsonConvert.SerializeObject(events.ToArray(), Formatting.Indented);
-            System.IO.File.WriteAllText(appPath + @"\App_Data\test.txt", json);
         }
 
         //@TempTesting (refactor out to a dedicated testing module)
