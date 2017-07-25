@@ -19,6 +19,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using RestSharp;
 using System.Net;
+using System.Diagnostics;
 
 namespace Lyca2CoreHrApiTask
 {
@@ -44,7 +45,6 @@ namespace Lyca2CoreHrApiTask
             Application.ThreadException                 += new ThreadExceptionEventHandler(OnUnhandledThreadException);
             AppDomain.CurrentDomain.UnhandledException  += new UnhandledExceptionEventHandler(OnUnhandledException);
             Program app = new Program();
-            //ServicePointManager.UseNagleAlgorithm = false; Uncomment if http request performance becoems an issue
 
             //Wrap specific exceptions
             try
@@ -111,6 +111,9 @@ namespace Lyca2CoreHrApiTask
                                 case "TestApiPost":
                                     app.TestApiPost(silentTesting);
                                     break;
+                                case "TestApiBatchPost":
+                                    app.TestApiBatchPost(silentTesting);
+                                    break;
                                 default:
                                     LogExit(ExitCode.InvalidTestName, Models.LogLevel.Debug);
                                     break;
@@ -146,6 +149,7 @@ namespace Lyca2CoreHrApiTask
 
         private void StartOrResume()
         {
+            var settings = Properties.Settings.Default;
             log.Info($"Starting / resuming...");
             try
             {
@@ -158,7 +162,7 @@ namespace Lyca2CoreHrApiTask
                         state.ProcessingState.LastSuccessfulRecord, 
                         eventTypes));
                 //Post all pending records
-                CoreAPI.PostClockingRecordBatch(ref state.ProcessingState.PendingRecords, ref state.ProcessingState.LastSuccessfulRecord);
+                CoreAPI.PostClockingRecordBatch(state.ProcessingState.PendingRecords, settings.CoreHrApiTokenExpiryTolerance);
             }
             catch (Exception ex)
             {
@@ -326,7 +330,6 @@ namespace Lyca2CoreHrApiTask
             List<ClockingEvent> el = new List<ClockingEvent>();
             ClockingEvent e = new ClockingEvent();
             List<int> eventIDs = new List<int> { 996868, 2998 };
-            int eventID = 1434381;
             DateTime today = DateTime.Today;
             DateTime from = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0, 0);
             DateTime to = new DateTime(today.Year, today.Month, today.Day, 23, 59, 59, 999);
@@ -429,7 +432,7 @@ namespace Lyca2CoreHrApiTask
         }
 
         //@TempTesting (refactor out to a dedicated testing module)
-        async void TestApiAuthentication(bool silent)
+        void TestApiAuthentication(bool silent)
         {
             try
             {
@@ -451,7 +454,7 @@ namespace Lyca2CoreHrApiTask
         }
 
         //@TempTesting (refactor out to a dedicated testing module)
-        async void TestApiPost(bool silent)
+        void TestApiPost(bool silent)
         {
             try
             {
@@ -465,6 +468,62 @@ namespace Lyca2CoreHrApiTask
             catch (Exception ex)
             {
                 log.Debug($"TestApiPost encountered an exception: {ex.ToString()}");
+                if (silent == false)
+                {
+                    Console.ReadLine();
+                }
+                throw;
+            }
+            if (silent == false)
+            {
+                Console.ReadLine();
+            }
+        }
+
+        //@TempTesting (refactor out to a dedicated testing module)
+        void TestApiBatchPost(bool silent)
+        {
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+            try
+            {
+                int UserId = 1192;
+                List<int> accessEventTypes = new List<int>() { 1280, 1288, 1313 };
+                int lastSuccessfulRecord = 0;
+                List<ClockingEvent> pendingRecords = CDVI.GetEventsByUser(UserId, accessEventTypes).Take(1000).ToList();
+                ProcessingState ps = new ProcessingState();
+
+                log.Debug($"TestApiBatchPost before batch post: lastSuccessfulRecord = {lastSuccessfulRecord}, pendingRecords count = {pendingRecords.Count}");
+
+                ps = CoreAPI.PostClockingRecordBatch(pendingRecords, 10);
+                log.Debug($"TestApiBatchPost after batch post: lastSuccessfulRecord = {lastSuccessfulRecord}, pendingRecords count = {pendingRecords.Count}, time elapsed = {new TimeSpan(timer.ElapsedTicks)}");
+            }
+            catch (Exception ex)
+            {
+                log.Debug($"TestApiPost encountered an exception: {ex.ToString()}");
+                if (silent == false)
+                {
+                    Console.ReadLine();
+                }
+                throw;
+            }
+            log.Debug($"Exiting test, time elapsed: {new TimeSpan(timer.ElapsedTicks)}");
+            if (silent == false)
+            {
+                Console.ReadLine();
+            }
+        }
+
+        //@TempTesting (refactor out to a dedicated testing module)
+        void TestSMTP(bool silent)
+        {
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+                log.Debug($"TestSMTP encountered an exception: {ex.ToString()}");
                 if (silent == false)
                 {
                     Console.ReadLine();
