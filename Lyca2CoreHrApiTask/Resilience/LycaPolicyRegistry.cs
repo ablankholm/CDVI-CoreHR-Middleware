@@ -68,7 +68,7 @@ namespace Lyca2CoreHrApiTask.Resilience
              * 
              * Basic retry policy meant to handle network microfaults.
             **/
-            Policy apiRecordPostingPolicy = Policy.Handle<Exception>().Retry(3);
+            Policy apiRecordPostingPolicy = Policy.Handle<Exception>().RetryAsync(3);
 
 
             //Register policies

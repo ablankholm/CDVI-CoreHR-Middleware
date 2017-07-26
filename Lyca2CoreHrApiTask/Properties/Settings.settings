@@ -14,5 +14,17 @@
     <Setting Name="CoreHrApiTokenExpiryTolerance" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">3</Value>
     </Setting>
+    <Setting Name="SmtpUri" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">smtp.lycanet.com</Value>
+    </Setting>
+    <Setting Name="SmtpPort" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">587</Value>
+    </Setting>
+    <Setting Name="SmtpUN" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">corehr</Value>
+    </Setting>
+    <Setting Name="SmtpPW" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">eRBjkCt4PgYr</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

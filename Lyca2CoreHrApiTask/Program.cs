@@ -20,6 +20,9 @@ using System.Text;
 using RestSharp;
 using System.Net;
 using System.Diagnostics;
+using MailKit;
+using MimeKit;
+using MailKit.Net.Smtp;
 
 namespace Lyca2CoreHrApiTask
 {
@@ -113,6 +116,9 @@ namespace Lyca2CoreHrApiTask
                                     break;
                                 case "TestApiBatchPost":
                                     app.TestApiBatchPost(silentTesting);
+                                    break;
+                                case "TestSMTP":
+                                    app.TestSMTP(silentTesting);
                                     break;
                                 default:
                                     LogExit(ExitCode.InvalidTestName, Models.LogLevel.Debug);
@@ -519,7 +525,34 @@ namespace Lyca2CoreHrApiTask
         {
             try
             {
+                var settings = Properties.Settings.Default;
 
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress("Lyca2CoreHRApi Middleware", "Lyca2CoreHRApiMiddleware@noreply.lycagroup.com"));
+                message.To.Add(new MailboxAddress("Developer", "anders.blankholm@switchwareltd.com"));
+                message.Subject = "SMTP Test | Lyca2CoreHRApi Middleware";
+                message.Body = new TextPart("plain") {
+                    Text = @"Hi Dev," + Environment.NewLine 
+                    + Environment.NewLine 
+                    + Environment.NewLine
+                    + "This is an SMTP test email" + Environment.NewLine
+                    + Environment.NewLine
+                    + Environment.NewLine
+                    + "Kind regards," + Environment.NewLine
+                    + "Lyca2CoreHRApi Middleware"
+                };
+
+                using (var client = new SmtpClient())
+                {
+                    client.Connect(settings.SmtpUri, settings.SmtpPort);
+
+                    client.AuthenticationMechanisms.Remove("XOAUTH2");
+
+                    client.Authenticate(settings.SmtpUN, settings.SmtpPW);
+
+                    client.Send(message);
+                    client.Disconnect(true);
+                }
             }
             catch (Exception ex)
             {

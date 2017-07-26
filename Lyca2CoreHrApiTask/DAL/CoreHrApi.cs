@@ -343,9 +343,11 @@ namespace Lyca2CoreHrApiTask.DAL
                                 Encoding.UTF8);
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-                //Excute request
+                //Execute request 
                 var response = await client.PostAsync("ws/lycau/corehr/v1/clocking/user/", content);
                 log.Debug($"Record {record.EventID.ToString()}: {response.StatusCode.ToString()}");
+
+
                 return new KeyValuePair<ClockingEvent, HttpResponseMessage>(record, response);
             }
             catch (Exception ex)

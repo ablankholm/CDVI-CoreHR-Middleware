@@ -58,5 +58,41 @@ namespace Lyca2CoreHrApiTask.Properties {
                 return ((int)(this["CoreHrApiTokenExpiryTolerance"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("smtp.lycanet.com")]
+        public string SmtpUri {
+            get {
+                return ((string)(this["SmtpUri"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("587")]
+        public int SmtpPort {
+            get {
+                return ((int)(this["SmtpPort"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("corehr")]
+        public string SmtpUN {
+            get {
+                return ((string)(this["SmtpUN"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("eRBjkCt4PgYr")]
+        public string SmtpPW {
+            get {
+                return ((string)(this["SmtpPW"]));
+            }
+        }
     }
 }
