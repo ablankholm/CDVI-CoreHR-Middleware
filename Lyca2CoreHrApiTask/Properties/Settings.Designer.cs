@@ -94,5 +94,14 @@ namespace Lyca2CoreHrApiTask.Properties {
                 return ((string)(this["SmtpPW"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int RecordScopeLastXMinutes {
+            get {
+                return ((int)(this["RecordScopeLastXMinutes"]));
+            }
+        }
     }
 }

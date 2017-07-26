@@ -106,6 +106,7 @@
     <Compile Include="Models\BearerTokenInfo.cs" />
     <Compile Include="Models\BearerTokenRequest.cs" />
     <Compile Include="Models\ClockingPayload.cs" />
+    <Compile Include="Models\RecordScope.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>

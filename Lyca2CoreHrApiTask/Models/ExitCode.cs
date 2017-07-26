@@ -13,6 +13,7 @@ namespace Lyca2CoreHrApiTask.Models
         UnhandledThreadException    = 4,
         CleanupAndExitFailed        = 5,
         StarOrResumeFailed          = 6,
-        InvalidTestName             = 7
+        InvalidTestName             = 7,
+        InvalidRecordScope          = 8
     }
 }

@@ -64,11 +64,54 @@ namespace Lyca2CoreHrApiTask
 
                 CLI.OnExecute(() =>
                 {
-                    app.StartOrResume();
+                    app.StartOrResume(RecordScope.Yesterday, true);
 
                     //If we got this far, something went wrong -> Exit
                     log.Error($"Exiting with code {ExitCode.StarOrResumeFailed} ({ExitCode.StarOrResumeFailed.ToString()})");
                     return (int)ExitCode.StarOrResumeFailed;
+                });
+
+
+
+                CLI.Command("Scheduled", c => 
+                {
+                    c.Description = "Command hook for specifying the record scope when running on a schedule.";
+                    c.HelpOption("-?|-h|--help");
+
+                    var silentOption = c.Option("--silent", "Run without asking for user imput.", CommandOptionType.NoValue);
+
+                    var scope = c.Option("--scope", "Specify the record scope to run batch posting for", CommandOptionType.SingleValue);
+
+                    c.OnExecute(() => 
+                    {
+                        bool runSilent = false;
+
+                        if (silentOption.HasValue())
+                        {
+                            runSilent = true;
+                        }
+
+                        if (scope.HasValue())
+                        {
+                            switch (scope.Value())
+                            {
+                                case "Yesterday":
+                                    app.StartOrResume(RecordScope.Yesterday, runSilent);
+                                    break;
+                                case "FromEventID":
+                                    app.StartOrResume(RecordScope.FromEventID, runSilent);
+                                    break;
+                                default:
+                                    LogExit(ExitCode.InvalidRecordScope, Models.LogLevel.Debug);
+                                    break;
+                            }
+                        }
+
+                        //If we got this far, something went wrong -> Exit
+                        log.Error($"Exiting with code {ExitCode.StarOrResumeFailed} ({ExitCode.StarOrResumeFailed.ToString()})");
+                        return (int)ExitCode.StarOrResumeFailed;
+                    });
+
                 });
 
 
@@ -153,26 +196,46 @@ namespace Lyca2CoreHrApiTask
 
 
 
-        private void StartOrResume()
+        private void StartOrResume(RecordScope scope, bool silent)
         {
             var settings = Properties.Settings.Default;
             log.Info($"Starting / resuming...");
             try
             {
-                //Restore from previous runs
+                //Restore state
                 LoadState(appPath + @"\App_Data\state.txt");
-                //Add new records to any records left over from previous runs
+
                 List<int> eventTypes = new List<int> { 1280, 1288, 1313 };
-                state.ProcessingState.PendingRecords.AddRange(
-                    CDVI.GetEvents(
-                        state.ProcessingState.LastSuccessfulRecord, 
-                        eventTypes));
+
+                //Retrieve records based on scope
+                switch (scope)
+                {
+                    case RecordScope.Yesterday:
+                        state.ProcessingState.PendingRecords.AddRange(CDVI.GetEventsByDate(DateTime.Today.AddDays(-1), eventTypes));
+                        break;
+                    case RecordScope.FromEventID:
+                        state.ProcessingState.PendingRecords.AddRange(CDVI.GetEvents(state.ProcessingState.LastSuccessfulRecord, eventTypes));
+                        break;
+                    default:
+                        LogExit(ExitCode.InvalidRecordScope, Models.LogLevel.Error);
+                        break;
+                }
+
                 //Post all pending records
-                CoreAPI.PostClockingRecordBatch(state.ProcessingState.PendingRecords, settings.CoreHrApiTokenExpiryTolerance);
+                state.ProcessingState  = CoreAPI.PostClockingRecordBatch(state.ProcessingState.PendingRecords, 10).Result;
+
+                if (silent == false)
+                {
+                    Console.ReadLine();
+                }
             }
             catch (Exception ex)
             {
                 log.Error($"Failed to start / resume (exception encountered: {ex}).");
+                if (silent == false)
+                {
+                    Console.ReadLine();
+                }
                 Exit(ExitCode.StarOrResumeFailed, Models.LogLevel.Error);
             }
             finally
