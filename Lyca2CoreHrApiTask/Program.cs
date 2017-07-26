@@ -461,7 +461,7 @@ namespace Lyca2CoreHrApiTask
                 ClockingEvent ce = new ClockingEvent() { UserID = 1192, FieldTime = DateTime.Now };
                 string apiResponse = string.Empty;
                 apiResponse = JsonConvert.SerializeObject(
-                    CoreAPI.PostClockingRecord(CoreAPI.GetClockingPayload(ce), CoreAPI.Authenticate().Token), 
+                    CoreAPI.PostClockingRecord(ce, 10), 
                     Formatting.Indented);
                 log.Debug($"TestApiPost - API Response: {apiResponse}");
             }
@@ -490,12 +490,12 @@ namespace Lyca2CoreHrApiTask
                 int UserId = 1192;
                 List<int> accessEventTypes = new List<int>() { 1280, 1288, 1313 };
                 int lastSuccessfulRecord = 0;
-                List<ClockingEvent> pendingRecords = CDVI.GetEventsByUser(UserId, accessEventTypes).Take(1000).ToList();
+                List<ClockingEvent> pendingRecords = CDVI.GetEventsByUser(UserId, accessEventTypes).OrderByDescending(r => r.FieldTime).Take(100).ToList();
                 ProcessingState ps = new ProcessingState();
 
                 log.Debug($"TestApiBatchPost before batch post: lastSuccessfulRecord = {lastSuccessfulRecord}, pendingRecords count = {pendingRecords.Count}");
 
-                ps = CoreAPI.PostClockingRecordBatch(pendingRecords, 10);
+                ps = CoreAPI.PostClockingRecordBatch(pendingRecords, 10).Result;
                 log.Debug($"TestApiBatchPost after batch post: lastSuccessfulRecord = {lastSuccessfulRecord}, pendingRecords count = {pendingRecords.Count}, time elapsed = {new TimeSpan(timer.ElapsedTicks)}");
             }
             catch (Exception ex)
