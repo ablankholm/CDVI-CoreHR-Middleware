@@ -13,6 +13,7 @@ namespace Lyca2CoreHrApiTask.Models
         Yesterday                   = 1,
         FromEventID                 = 2,
         SpecificDate                = 3,
-        SpecificUser                = 4
+        SpecificUser                = 4,
+        LastXHours                  = 5
     }
 }

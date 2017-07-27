@@ -64,37 +64,15 @@ namespace Lyca2CoreHrApiTask
 
                 CLI.OnExecute(() =>
                 {
-                    try
-                    {
-                        //Default mode: run for all access events within the last hour
-                        List<int> eventTypes = new List<int> { 1280, 1288, 1313 };
-                        DateTime windowEnd = DateTime.Now;
-                        DateTime windowStart = windowEnd.AddHours(-1);
-                        List<ClockingEvent> records = new List<ClockingEvent>();
-                        records = app.CDVI.GetEventsByTimewindow(windowStart, windowEnd, eventTypes);
-
-                        //Post all records found on date
-                        log.Info($"Posting {records.Count} records from {windowStart.ToString("dd-MMM-yyyy hh:mm:ss")} to {windowEnd.ToString("dd-MMM-yyyy hh:mm:ss")} (previous 1 hour)");
-                        var unsuccessfulRecords = app.CoreAPI.PostClockingRecordBatch(records, 10);
-                        log.Info($"Posting complete. {records.Count - unsuccessfulRecords.PendingRecords.Count} of {records.Count} were successfully posted ({unsuccessfulRecords.PendingRecords.Count} unsuccessful records)");
-
-                        if (!Properties.Settings.Default.DefaultExecutionIsSilent)
-                        {
-                            Console.ReadLine();
-                        }
-
-                        return (int)ExitCode.Success;
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Error($"Encountered an exception: {ex.ToString()}");
-                        return (int)ExitCode.ExceptionEncountered;
-                    }
+                    var settings = Properties.Settings.Default;
+                    return (int)app.PostRecordsFromLastXHours(
+                        settings.DefaultExecutionPostLastXHours, 
+                        settings.DefaultExecutionIsSilent);
                 });
 
 
 
-                CLI.Command("Configure", c => 
+                CLI.Command("configure", c => 
                 {
                     c.Description = "Command hook for specifying the record scope.";
                     c.HelpOption("-?|-h|--help");
@@ -103,13 +81,15 @@ namespace Lyca2CoreHrApiTask
 
                     var scope = c.Option("--scope", "Specify the record scope to run batch posting for", CommandOptionType.SingleValue);
 
-                    var userId = c.Option("-u|--user", "Specify the the user (by CDVI user id) to run batch posting for", CommandOptionType.SingleValue);
+                    var hours = c.Option("--hours", "Specify the number of previous hours to run batch posting for", CommandOptionType.SingleValue);
 
-                    var date = c.Option("-d|--date", "Specify the date to run batch posting for", CommandOptionType.SingleValue);
+                    var userId = c.Option("--user", "Specify the user (by CDVI user id) to run batch posting for", CommandOptionType.SingleValue);
+
+                    var date = c.Option("--date", "Specify the date to run batch posting for", CommandOptionType.SingleValue);
 
                     c.OnExecute(() => 
                     {
-                        bool runSilent = false;
+                        bool runSilent = Properties.Settings.Default.DefaultExecutionIsSilent;
 
                         if (silentOption.HasValue())
                         {
@@ -125,6 +105,21 @@ namespace Lyca2CoreHrApiTask
                                     break;
                                 case "FromEventID":
                                     app.StartOrResume(RecordScope.FromEventID, runSilent);
+                                    break;
+                                case "LastXHours":
+                                    if (hours.HasValue())
+                                    {
+                                        int h = Properties.Settings.Default.DefaultExecutionPostLastXHours;
+                                        if (int.TryParse(hours.Value(), out h))
+                                        {
+                                            ExitCode code = app.PostRecordsFromLastXHours(h, runSilent);
+                                            app.Exit(code);
+                                        }
+                                        else
+                                        {
+                                            LogExit(ExitCode.InvalidXHoursScope, Models.LogLevel.Error);
+                                        }
+                                    }
                                     break;
                                 case "Date":
                                     if (date.HasValue())
@@ -145,20 +140,20 @@ namespace Lyca2CoreHrApiTask
                         }
 
                         //If we got this far, something went wrong -> Exit
-                        log.Error($"Exiting with code {ExitCode.StarOrResumeFailed} ({ExitCode.StarOrResumeFailed.ToString()})");
-                        return (int)ExitCode.StarOrResumeFailed;
+                        log.Error($"Exiting with code {ExitCode.StartOrResumeFailed} ({ExitCode.StartOrResumeFailed.ToString()})");
+                        return (int)ExitCode.StartOrResumeFailed;
                     });
 
                 });
 
 
 
-                CLI.Command("RunDevTest", c =>
+                CLI.Command("test", c =>
                 {
                     c.Description = "Runs the currently configured test method for iterative development";
                     c.HelpOption("-?|-h|--help");
 
-                    var silentOption = c.Option("--silent", "Run without asking for user imput.", CommandOptionType.NoValue);
+                    var silentOption = c.Option("--silent", "Run without asking for user iiput.", CommandOptionType.NoValue);
 
                     var testName = c.Option("-n|--name", "Specify the test to run by its name", CommandOptionType.SingleValue);
 
@@ -338,7 +333,7 @@ namespace Lyca2CoreHrApiTask
                 {
                     Console.ReadLine();
                 }
-                Exit(ExitCode.StarOrResumeFailed, Models.LogLevel.Error);
+                Exit(ExitCode.StartOrResumeFailed, Models.LogLevel.Error);
             }
         }
 
@@ -403,6 +398,38 @@ namespace Lyca2CoreHrApiTask
                 throw;
             }
             log.Info($"State saved.");
+        }
+
+
+
+        private ExitCode PostRecordsFromLastXHours(int hours, bool silent)
+        {
+            try
+            {
+                //Run for all access events within the X hours
+                List<int> eventTypes = new List<int> { 1280, 1288, 1313 };
+                DateTime windowEnd = DateTime.Now;
+                DateTime windowStart = windowEnd.AddHours(-hours);
+                List<ClockingEvent> records = new List<ClockingEvent>();
+                records = CDVI.GetEventsByTimewindow(windowStart, windowEnd, eventTypes);
+
+                //Post all records found on date
+                log.Info($"Posting {records.Count} records from {windowStart.ToString("dd-MMM-yyyy hh:mm:ss")} to {windowEnd.ToString("dd-MMM-yyyy hh:mm:ss")} (previous 1 hour)");
+                var unsuccessfulRecords = CoreAPI.PostClockingRecordBatch(records, 10);
+                log.Info($"Posting complete. {records.Count - unsuccessfulRecords.PendingRecords.Count} of {records.Count} were successfully posted ({unsuccessfulRecords.PendingRecords.Count} unsuccessful records)");
+
+                if (!silent)
+                {
+                    Console.ReadLine();
+                }
+
+                return ExitCode.Success;
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Encountered an exception: {ex.ToString()}");
+                return ExitCode.ExceptionEncountered;
+            }
         }
 
 

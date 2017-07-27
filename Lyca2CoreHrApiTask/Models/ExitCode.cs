@@ -12,10 +12,11 @@ namespace Lyca2CoreHrApiTask.Models
         UnhandledException          = 3,
         UnhandledThreadException    = 4,
         CleanupAndExitFailed        = 5,
-        StarOrResumeFailed          = 6,
+        StartOrResumeFailed         = 6,
         InvalidTestName             = 7,
         InvalidRecordScope          = 8,
         InvalidDateScope            = 9,
-        InvalidUserScope            = 10
+        InvalidUserScope            = 10,
+        InvalidXHoursScope          = 11
     }
 }
