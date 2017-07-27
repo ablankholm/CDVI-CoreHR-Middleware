@@ -23,6 +23,7 @@ using System.Diagnostics;
 using MailKit;
 using MimeKit;
 using MailKit.Net.Smtp;
+using System.Runtime.InteropServices;
 
 namespace Lyca2CoreHrApiTask
 {
@@ -65,6 +66,11 @@ namespace Lyca2CoreHrApiTask
                 CLI.OnExecute(() =>
                 {
                     var settings = Properties.Settings.Default;
+                    if (settings.DefaultExecutionIsSilent)
+                    {
+                        FreeConsole();
+                    }
+                    
                     return (int)app.PostRecordsFromLastXHours(
                         settings.DefaultExecutionPostLastXHours, 
                         settings.DefaultExecutionIsSilent);
@@ -89,12 +95,20 @@ namespace Lyca2CoreHrApiTask
 
                     c.OnExecute(() => 
                     {
+                        //Setup silent execution if specified
+                        //Default to settings file
                         bool runSilent = Properties.Settings.Default.DefaultExecutionIsSilent;
-
+                        //Handle override of default 
                         if (silentOption.HasValue())
                         {
                             runSilent = true;
                         }
+                        //Handle headless execution after defaults and overrides have been resolved.
+                        if (runSilent)
+                        {
+                            FreeConsole();
+                        }
+
 
                         if (scope.HasValue())
                         {
@@ -225,6 +239,11 @@ namespace Lyca2CoreHrApiTask
             //If we haven't returned by this point, something went wrong -> Exit
             return LogExit(ExitCode.GenericFailure, Models.LogLevel.Error);
         }
+
+
+
+        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
+        static extern bool FreeConsole();
 
 
 
