@@ -204,6 +204,49 @@ namespace Lyca2CoreHrApiTask.DAL
 
 
 
+        public List<ClockingEvent> GetEventsByTimewindow(DateTime fromTime, DateTime toTime, List<int> eventTypes)
+        {
+            try
+            {
+                List<ClockingEvent> events = new List<ClockingEvent>();
+                DateTime startOfDate = fromTime;
+                DateTime endOfDate = toTime;
+                string From = startOfDate.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                string To = endOfDate.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                string EventTypes = String.Join(",", eventTypes);
+                string query = eventsBaseQuery + $"WHERE ([Field Time] BETWEEN CONVERT(datetime, '{From}') AND CONVERT(datetime, '{To}')) "
+                                               + $"AND [Event Type] IN ({EventTypes}) ";
+
+
+
+                log.Info($"GetEvents(fromTime: {fromTime}, toTime: {toTime},eventTypes: {EventTypes}) executing query : {query}");
+                Policies.Get<Policy>("cdviDbPolicy").Execute(() =>
+                {
+                    using (var conn = new SqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        using (IDatabase db = new Database(conn))
+                        {
+                            var result = db.Fetch<ClockingEvent>(query);
+                            events = result;
+                        }
+                        conn.Close();
+                    }
+                });
+
+
+
+                return events;
+            }
+            catch (Exception ex)
+            {
+                log.Fatal($"Failed to retrieve records from database (exception encountered: {ex}).");
+                throw;
+            }
+        }
+
+
+
         public List<ClockingEvent> GetEventsByUser(int userId, List<int> eventTypes)
         {
             try

@@ -103,5 +103,14 @@ namespace Lyca2CoreHrApiTask.Properties {
                 return ((int)(this["RecordScopeLastXMinutes"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DefaultExecutionIsSilent {
+            get {
+                return ((bool)(this["DefaultExecutionIsSilent"]));
+            }
+        }
     }
 }

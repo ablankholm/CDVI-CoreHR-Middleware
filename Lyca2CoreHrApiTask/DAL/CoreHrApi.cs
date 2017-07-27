@@ -255,7 +255,7 @@ namespace Lyca2CoreHrApiTask.DAL
 
 
 
-        public async Task<ProcessingState> PostClockingRecordBatch(List<ClockingEvent> batch, int tokenExpiryTolerance)
+        public async Task<ProcessingState> PostClockingRecordBatchAsync(List<ClockingEvent> batch, int tokenExpiryTolerance)
         {
             log.Info($"Attempting to post batch of {batch.Count.ToString()} clocking records to CoreHr API with an auth token expiry tolerance of {tokenExpiryTolerance} seconds");
             try
@@ -283,7 +283,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 var requestTasks = new List<Task<KeyValuePair<ClockingEvent, HttpResponseMessage>>>();
                 foreach (var record in batch)
                 {
-                    requestTasks.Add(PostClockingRecord(record, tokenExpiryTolerance, timeZoneOffset));
+                    requestTasks.Add(PostClockingRecordAsync(record, tokenExpiryTolerance, timeZoneOffset));
                 }
 
                 //Execute all requests
@@ -317,7 +317,61 @@ namespace Lyca2CoreHrApiTask.DAL
 
 
 
-        public async Task<KeyValuePair<ClockingEvent, HttpResponseMessage>> PostClockingRecord(ClockingEvent record, int tokenExpiryTolerance, string timeZoneOffset = "+00:00")
+        public ProcessingState PostClockingRecordBatch(List<ClockingEvent> batch, int tokenExpiryTolerance)
+        {
+            log.Info($"Attempting to post batch of {batch.Count.ToString()} clocking records to CoreHr API with an auth token expiry tolerance of {tokenExpiryTolerance} seconds");
+            try
+            {
+                ProcessingState state = new ProcessingState();
+                state.LastSuccessfulRecord = 0;
+                state.PendingRecords = new List<ClockingEvent>();
+                Stopwatch timer = new Stopwatch();
+                string timeZoneOffset = "+00:00";
+
+
+                timer.Start();
+                //Pre-Authenticate
+                authToken = Authenticate();
+
+                //Configure Shared client object
+                client.BaseAddress = new Uri("https://uatapi.corehr.com/");
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
+                client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue() { NoCache = true };
+
+                //Needed for large batches
+                ServicePointManager.DnsRefreshTimeout = (int)TimeSpan.FromMinutes(1).TotalMilliseconds;
+
+
+                foreach (var record in batch)
+                {
+                    var response = PostClockingRecord(record, 10);
+
+                    if (response.Value.IsSuccessStatusCode)
+                    {
+                        state.LastSuccessfulRecord = response.Key.EventID;
+                    }
+                    else
+                    {
+                        state.PendingRecords.Add(response.Key);
+                    }
+                }
+
+                timer.Stop();
+                log.Info($"Batch post completed in: {new TimeSpan(timer.ElapsedTicks).ToString()}");
+                log.Info($"Pending records: {state.PendingRecords.Count}, Last successful record: {state.LastSuccessfulRecord}");
+
+                return state;
+            }
+            catch (Exception ex)
+            {
+                log.Fatal($"Failed to post records to API (exception encountered: {ex}).");
+                throw;
+            }
+        }
+
+
+
+        public async Task<KeyValuePair<ClockingEvent, HttpResponseMessage>> PostClockingRecordAsync(ClockingEvent record, int tokenExpiryTolerance, string timeZoneOffset = "+00:00")
         {
             try
             {
@@ -345,6 +399,48 @@ namespace Lyca2CoreHrApiTask.DAL
 
                 //Execute request 
                 var response = await client.PostAsync("ws/lycau/corehr/v1/clocking/user/", content);
+                log.Debug($"Record {record.EventID.ToString()}: {response.StatusCode.ToString()}");
+
+
+                return new KeyValuePair<ClockingEvent, HttpResponseMessage>(record, response);
+            }
+            catch (Exception ex)
+            {
+                log.Fatal($"Failed to post record with id {record.EventID} to API (exception encountered: {ex}).");
+                throw;
+            }
+        }
+
+
+
+        public KeyValuePair<ClockingEvent, HttpResponseMessage> PostClockingRecord(ClockingEvent record, int tokenExpiryTolerance, string timeZoneOffset = "+00:00")
+        {
+            try
+            {
+                //Make sure we're authenticated before posting
+                if (authToken.WillExpireWithin(tokenExpiryTolerance))
+                {
+                    log.Info($"Token expiring within {tokenExpiryTolerance}, re-authenticating...");
+                    authToken = Authenticate();
+                    client.DefaultRequestHeaders.Clear();
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
+                    client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue() { NoCache = true };
+                }
+
+                //Generate content body
+                StringContent content = new StringContent(
+                                "{\r\n\"person\" : \"\", \r\n\"badge_no\": \""
+                                    + $"{record.UserID.ToString()}"
+                                    + "\", \r\n\"clock_date_time\" : \""
+                                    + $"{record.FieldTime.ToString($"yyyy-MM-dd HH:mm")} {timeZoneOffset}"
+                                    + "\",\r\n\"record_type\"     : \"B0\", \r\n\"function_code\"   : \"\",\r\n\"function_value\"  : \"\",  \r\n\"device_id\"       : \""
+                                    + $"{record.RecordNameID.ToString()}"
+                                    + "\"\r\n}",
+                                Encoding.UTF8);
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+                //Execute request 
+                HttpResponseMessage response = client.PostAsync("ws/lycau/corehr/v1/clocking/user/", content).Result;
                 log.Debug($"Record {record.EventID.ToString()}: {response.StatusCode.ToString()}");
 
 

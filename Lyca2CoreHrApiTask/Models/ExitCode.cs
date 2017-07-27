@@ -14,6 +14,8 @@ namespace Lyca2CoreHrApiTask.Models
         CleanupAndExitFailed        = 5,
         StarOrResumeFailed          = 6,
         InvalidTestName             = 7,
-        InvalidRecordScope          = 8
+        InvalidRecordScope          = 8,
+        InvalidDateScope            = 9,
+        InvalidUserScope            = 10
     }
 }
