@@ -51,7 +51,7 @@ namespace Lyca2CoreHrApiTask
         {
             Application.ThreadException                 += new ThreadExceptionEventHandler(OnUnhandledThreadException);
             AppDomain.CurrentDomain.UnhandledException  += new UnhandledExceptionEventHandler(OnUnhandledException);
-            Program app = new Program();
+            Program app                                 = new Program();
 
             //Wrap specific exceptions
             try
@@ -273,7 +273,7 @@ namespace Lyca2CoreHrApiTask
                         state.ProcessingState.PendingRecords.AddRange(CDVI.GetEventsByDate(DateTime.Today.AddDays(-1), eventTypes));
 
                         //Post all pending records
-                        state.ProcessingState = CoreAPI.PostClockingRecordBatch(state.ProcessingState.PendingRecords, 10);
+                        state.ProcessingState = CoreAPI.PostClockingRecordBatch(state.ProcessingState.PendingRecords, settings.CoreHrApiTokenExpiryTolerance);
 
                         //Get ready for next run
                         CleanupAndExit();
@@ -288,7 +288,7 @@ namespace Lyca2CoreHrApiTask
                         state.ProcessingState.PendingRecords.AddRange(CDVI.GetEvents(state.ProcessingState.LastSuccessfulRecord, eventTypes));
 
                         //Post all pending records
-                        state.ProcessingState = CoreAPI.PostClockingRecordBatch(state.ProcessingState.PendingRecords, 10);
+                        state.ProcessingState = CoreAPI.PostClockingRecordBatch(state.ProcessingState.PendingRecords, settings.CoreHrApiTokenExpiryTolerance);
 
                         //Get ready for next run
                         CleanupAndExit();
@@ -305,7 +305,7 @@ namespace Lyca2CoreHrApiTask
                             
                             //Post all records found on date
                             log.Info($"Posting {records.Count} records from {d.ToString("dd-MMM-yyyy")}");
-                            var unsuccessfulRecords = CoreAPI.PostClockingRecordBatch(records, 10);
+                            var unsuccessfulRecords = CoreAPI.PostClockingRecordBatch(records, settings.CoreHrApiTokenExpiryTolerance);
                             log.Info($"Posting complete. {records.Count - unsuccessfulRecords.PendingRecords.Count} of {records.Count} were successfully posted ({unsuccessfulRecords.PendingRecords.Count} unsuccessful records)");
                             
                             //Exit without updating state
@@ -328,7 +328,7 @@ namespace Lyca2CoreHrApiTask
 
                             //Post all records found for user
                             log.Info($"Posting {records.Count} records for user {id}");
-                            var unsuccessfulRecords = CoreAPI.PostClockingRecordBatch(records, 10);
+                            var unsuccessfulRecords = CoreAPI.PostClockingRecordBatch(records, settings.CoreHrApiTokenExpiryTolerance);
                             log.Info($"Posting complete. {records.Count - unsuccessfulRecords.PendingRecords.Count} of {records.Count} were successfully posted ({unsuccessfulRecords.PendingRecords.Count} unsuccessful records)");
 
                             //Exit without updating state

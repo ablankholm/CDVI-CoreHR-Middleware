@@ -29,242 +29,17 @@ namespace Lyca2CoreHrApiTask.DAL
         private HttpClient          client                  = new HttpClient();
 
 
-        //Deprecated on grounds of performance
-        //public ProcessingState PostClockingRecordBatch(List<ClockingEvent> batch, int tokenExpiryTolerance)
-        //{
-        //    log.Info($"Attempting to post batch of {batch.Count.ToString()} clocking records to CoreHr API with an auth token expiry tolerance of {tokenExpiryTolerance} seconds");
-        //    try
-        //    {
-        //        ProcessingState state = new ProcessingState();
-        //        state.LastSuccessfulRecord = 0;
-        //        state.PendingRecords = new List<ClockingEvent>();
-        //        Stopwatch timer = new Stopwatch();
-
-        //        //Share client and request object with all post requests (to reduce in-loop object creation and related performance overhead )
-        //        var client = new RestClient("https://uatapi.corehr.com/ws/lycau/corehr/v1/clocking/user/");
-        //        var request = new RestRequest(Method.POST);
-        //        request.AddHeader("cache-control", "no-cache");
-        //        request.AddHeader("content-type", "application/json");
-
-        //        //Performance optimization related to RestSharp
-        //        ServicePointManager.UseNagleAlgorithm = false;
-        //        ServicePointManager.MaxServicePointIdleTime = 1;
-
-        //        authToken = Authenticate();
-        //        request.AddHeader("authorization", $"Bearer {authToken.Token.access_token}");
-        //        string timeZoneOffset = "+00:00";
-        //        timer.Start();
-        //        foreach (var record in batch)
-        //        {
-        //            //Make sure we're authenticated before posting
-        //            if (authToken.WillExpireWithin(tokenExpiryTolerance))
-        //            {
-        //                log.Info($"Token expiring within {tokenExpiryTolerance}, re-authenticating...");
-        //                authToken = Authenticate();
-        //                request = new RestRequest(Method.POST);
-        //                request.AddHeader("cache-control", "no-cache");
-        //                request.AddHeader("content-type", "application/json");
-        //                request.AddHeader("authorization", $"Bearer {authToken.Token.access_token}");
-        //            }
-
-        //            //Generate request body
-        //            request.AddParameter(
-        //                "application/json",
-        //                "{\r\n\"person\" : \"\", \r\n\"badge_no\": \""
-        //                    + $"{record.UserID.ToString()}"
-        //                    + "\", \r\n\"clock_date_time\" : \""
-        //                    + $"{record.FieldTime.ToString($"yyyy-MM-dd HH:mm")} {timeZoneOffset}"
-        //                    + "\",\r\n\"record_type\"     : \"B0\", \r\n\"function_code\"   : \"\",\r\n\"function_value\"  : \"\",  \r\n\"device_id\"       : \""
-        //                    + $"{record.RecordNameID.ToString()}"
-        //                    + "\"\r\n}",
-        //                ParameterType.RequestBody);
-
-        //            //Post request
-        //            IRestResponse response = client.Execute(request);
-        //            log.Debug($"Record {record.EventID.ToString()}: {response.StatusCode.ToString()}");
-
-        //            //Update state
-        //            if (response.StatusCode == HttpStatusCode.Created)
-        //            {
-        //                state.LastSuccessfulRecord = record.EventID;
-        //            }
-        //            else
-        //            {
-        //                state.PendingRecords.Add(record);
-        //            }
-
-        //            //Cleanup body param for next iteration (RestSharp ignores multiple body params beyond the first)
-        //            request.Parameters.Remove(request.Parameters.Where(p => p.Type == ParameterType.RequestBody).FirstOrDefault());
-        //        }
-        //        timer.Stop();
-        //        log.Info($"Batch post completed in: {new TimeSpan(timer.ElapsedTicks).ToString()}");
-        //        log.Info($"Pending records: {state.PendingRecords.Count}, Last successful record: {state.LastSuccessfulRecord}");
-
-        //        return state;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        log.Fatal($"Failed to post records to API (exception encountered: {ex}).");
-        //        throw;
-        //    }
-        //}
-
-
-        //Deprecated on grounds of performance
-        //public ProcessingState PostClockingRecordBatch2(List<ClockingEvent> batch, int tokenExpiryTolerance)
-        //{
-        //    log.Info($"Attempting to post batch of {batch.Count.ToString()} clocking records to CoreHr API with an auth token expiry tolerance of {tokenExpiryTolerance} seconds");
-        //    try
-        //    {
-        //        ProcessingState state = new ProcessingState();
-        //        state.LastSuccessfulRecord = 0;
-        //        state.PendingRecords = new List<ClockingEvent>();
-        //        Stopwatch timer = new Stopwatch();
-        //        string timeZoneOffset = "+00:00";
-
-
-        //        timer.Start();
-        //        authToken = Authenticate();
-
-        //        //Shared client object
-        //        HttpClient client = new HttpClient();
-        //        client.BaseAddress = new Uri("https://uatapi.corehr.com/");
-        //        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
-        //        client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue() { NoCache = true };
-
-        //        ServicePointManager.DnsRefreshTimeout = (int)TimeSpan.FromMinutes(1).TotalMilliseconds;
-
-
-        //        foreach (var record in batch)
-        //        {
-        //            //Make sure we're authenticated before posting
-        //            if (authToken.WillExpireWithin(tokenExpiryTolerance))
-        //            {
-        //                log.Info($"Token expiring within {tokenExpiryTolerance}, re-authenticating...");
-        //                authToken = Authenticate();
-        //                client.DefaultRequestHeaders.Clear();
-        //                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
-        //                client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue() { NoCache = true };
-        //            }
-
-        //            //Generate request content
-        //            StringContent content = new StringContent(
-        //                "{\r\n\"person\" : \"\", \r\n\"badge_no\": \""
-        //                    + $"{record.UserID.ToString()}"
-        //                    + "\", \r\n\"clock_date_time\" : \""
-        //                    + $"{record.FieldTime.ToString($"yyyy-MM-dd HH:mm")} {timeZoneOffset}"
-        //                    + "\",\r\n\"record_type\"     : \"B0\", \r\n\"function_code\"   : \"\",\r\n\"function_value\"  : \"\",  \r\n\"device_id\"       : \""
-        //                    + $"{record.RecordNameID.ToString()}"
-        //                    + "\"\r\n}", 
-        //                Encoding.UTF8);
-        //            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-
-        //            var response = client.PostAsync("ws/lycau/corehr/v1/clocking/user/", content).Result;
-        //            log.Debug($"Record {record.EventID.ToString()}: {response.StatusCode.ToString()}");
-
-        //            //Update state
-        //            if (response.StatusCode == HttpStatusCode.Created)
-        //            {
-        //                state.LastSuccessfulRecord = record.EventID;
-        //            }
-        //            else
-        //            {
-        //                state.PendingRecords.Add(record);
-        //            }
-        //        }
-
-
-        //        timer.Stop();
-        //        log.Info($"Batch post completed in: {new TimeSpan(timer.ElapsedTicks).ToString()}");
-        //        log.Info($"Pending records: {state.PendingRecords.Count}, Last successful record: {state.LastSuccessfulRecord}");
-
-        //        return state;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        log.Fatal($"Failed to post records to API (exception encountered: {ex}).");
-        //        throw;
-        //    }
-        //}
-
-
-        //Deprecated on grounds of performance
-        //public async Task<ProcessingState> PostClockingRecordBatch3(List<ClockingEvent> batch, int tokenExpiryTolerance)
-        //{
-        //    log.Info($"Attempting to post batch of {batch.Count.ToString()} clocking records to CoreHr API with an auth token expiry tolerance of {tokenExpiryTolerance} seconds");
-        //    try
-        //    {
-        //        ProcessingState state = new ProcessingState();
-        //        state.LastSuccessfulRecord = 0;
-        //        state.PendingRecords = new List<ClockingEvent>();
-        //        Stopwatch timer = new Stopwatch();
-        //        string timeZoneOffset = "+00:00";
-
-
-        //        timer.Start();
-        //        authToken = Authenticate();
-
-        //        //Configure Shared client object
-        //        client.BaseAddress = new Uri("https://uatapi.corehr.com/");
-        //        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
-        //        client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue() { NoCache = true };
-
-        //        //Needed for large batches
-        //        ServicePointManager.DnsRefreshTimeout = (int)TimeSpan.FromMinutes(1).TotalMilliseconds;
-
-        //        //Generate request bodies
-        //        List<StringContent> requestContentList = new List<StringContent>();
-        //        StringContent sc;
-        //        foreach (var record in batch)
-        //        {
-        //            sc = new StringContent(
-        //                    "{\r\n\"person\" : \"\", \r\n\"badge_no\": \""
-        //                    + $"{record.UserID.ToString()}"
-        //                    + "\", \r\n\"clock_date_time\" : \""
-        //                    + $"{record.FieldTime.ToString($"yyyy-MM-dd HH:mm")} {timeZoneOffset}"
-        //                    + "\",\r\n\"record_type\"     : \"B0\", \r\n\"function_code\"   : \"\",\r\n\"function_value\"  : \"\",  \r\n\"device_id\"       : \""
-        //                    + $"{record.RecordNameID.ToString()}"
-        //                    + "\"\r\n}",
-        //                Encoding.UTF8);
-        //            sc.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        //            requestContentList.Add(sc);
-        //        }
-
-        //        //Generate requests
-        //        var taskList = new List<Task<HttpResponseMessage>>();
-        //        foreach (var content in requestContentList)
-        //        {
-        //            taskList.Add(client.PostAsync("ws/lycau/corehr/v1/clocking/user/", content));
-        //        }
-
-        //        //Execute all requests
-        //        var results = await Task.WhenAll(taskList.ToArray());
-
-        //        timer.Stop();
-        //        log.Info($"Batch post completed in: {new TimeSpan(timer.ElapsedTicks).ToString()}");
-        //        log.Info($"Pending records: {state.PendingRecords.Count}, Last successful record: {state.LastSuccessfulRecord}");
-
-        //        return state;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        log.Fatal($"Failed to post records to API (exception encountered: {ex}).");
-        //        throw;
-        //    }
-        //}
-
-
 
         public async Task<ProcessingState> PostClockingRecordBatchAsync(List<ClockingEvent> batch, int tokenExpiryTolerance)
         {
             log.Info($"Attempting to post batch of {batch.Count.ToString()} clocking records to CoreHr API with an auth token expiry tolerance of {tokenExpiryTolerance} seconds");
             try
             {
-                ProcessingState state = new ProcessingState();
-                state.LastSuccessfulRecord = 0;
-                state.PendingRecords = new List<ClockingEvent>();
-                Stopwatch timer = new Stopwatch();
-                string timeZoneOffset = "+00:00";
+                Stopwatch       timer           = new Stopwatch();
+                string          timeZoneOffset  = settings.DefaultTimeZoneOffset;
+                ProcessingState state           = new ProcessingState();
+                    state.LastSuccessfulRecord  = 0;
+                    state.PendingRecords        = new List<ClockingEvent>();
 
 
                 timer.Start();
@@ -272,12 +47,12 @@ namespace Lyca2CoreHrApiTask.DAL
                 authToken = Authenticate();
 
                 //Configure Shared client object
-                client.BaseAddress = new Uri("https://uatapi.corehr.com/");
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
-                client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue() { NoCache = true };
+                client.BaseAddress                          = new Uri(settings.CoreHrApiBaseUri);
+                client.DefaultRequestHeaders.Authorization  = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
+                client.DefaultRequestHeaders.CacheControl   = new CacheControlHeaderValue() { NoCache = true };
 
                 //Needed for large batches
-                ServicePointManager.DnsRefreshTimeout = (int)TimeSpan.FromMinutes(1).TotalMilliseconds;
+                ServicePointManager.DnsRefreshTimeout = (int)TimeSpan.FromMinutes(settings.DefaultDnsRefreshTimeoutMinutes).TotalMilliseconds;
 
                 //Generate requests
                 var requestTasks = new List<Task<KeyValuePair<ClockingEvent, HttpResponseMessage>>>();
@@ -322,11 +97,11 @@ namespace Lyca2CoreHrApiTask.DAL
             log.Info($"Attempting to post batch of {batch.Count.ToString()} clocking records to CoreHr API with an auth token expiry tolerance of {tokenExpiryTolerance} seconds");
             try
             {
-                ProcessingState state = new ProcessingState();
-                state.LastSuccessfulRecord = 0;
-                state.PendingRecords = new List<ClockingEvent>();
-                Stopwatch timer = new Stopwatch();
-                string timeZoneOffset = "+00:00";
+                Stopwatch       timer           = new Stopwatch();
+                string          timeZoneOffset  = settings.DefaultTimeZoneOffset;
+                ProcessingState state           = new ProcessingState();
+                    state.LastSuccessfulRecord  = 0;
+                    state.PendingRecords        = new List<ClockingEvent>();
 
 
                 timer.Start();
@@ -335,17 +110,17 @@ namespace Lyca2CoreHrApiTask.DAL
                 authToken = Authenticate();
 
                 //Configure Shared client object
-                client.BaseAddress = new Uri("https://uatapi.corehr.com/");
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
-                client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue() { NoCache = true };
+                client.BaseAddress                          = new Uri(settings.CoreHrApiBaseUri);
+                client.DefaultRequestHeaders.Authorization  = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
+                client.DefaultRequestHeaders.CacheControl   = new CacheControlHeaderValue() { NoCache = true };
 
                 //Needed for large batches
-                ServicePointManager.DnsRefreshTimeout = (int)TimeSpan.FromMinutes(1).TotalMilliseconds;
+                ServicePointManager.DnsRefreshTimeout = (int)TimeSpan.FromMinutes(settings.DefaultDnsRefreshTimeoutMinutes).TotalMilliseconds;
 
 
                 foreach (var record in batch)
                 {
-                    var response = PostClockingRecord(record, 10);
+                    var response = PostClockingRecord(record, tokenExpiryTolerance);
 
                     if (response.Value.IsSuccessStatusCode)
                     {
@@ -382,8 +157,8 @@ namespace Lyca2CoreHrApiTask.DAL
                     log.Info($"Token expiring within {tokenExpiryTolerance}, re-authenticating...");
                     authToken = Authenticate();
                     client.DefaultRequestHeaders.Clear();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
-                    client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue() { NoCache = true };
+                    client.DefaultRequestHeaders.Authorization  = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
+                    client.DefaultRequestHeaders.CacheControl   = new CacheControlHeaderValue() { NoCache = true };
                 }
 
                 //Generate content body
@@ -399,7 +174,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
                 //Execute request 
-                var response = await client.PostAsync("ws/lycau/corehr/v1/clocking/user/", content);
+                var response = await client.PostAsync(settings.CoreHrApiClockingEndpoint, content);
                 log.Debug($"Record {record.EventID.ToString()}: {response.StatusCode.ToString()}");
 
 
@@ -424,8 +199,8 @@ namespace Lyca2CoreHrApiTask.DAL
                     log.Info($"Token expiring within {tokenExpiryTolerance}, re-authenticating...");
                     authToken = Authenticate();
                     client.DefaultRequestHeaders.Clear();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
-                    client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue() { NoCache = true };
+                    client.DefaultRequestHeaders.Authorization  = new AuthenticationHeaderValue("Bearer", authToken.Token.access_token);
+                    client.DefaultRequestHeaders.CacheControl   = new CacheControlHeaderValue() { NoCache = true };
                 }
 
                 //Generate content body
@@ -441,7 +216,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
                 //Execute request 
-                HttpResponseMessage response = client.PostAsync("ws/lycau/corehr/v1/clocking/user/", content).Result;
+                HttpResponseMessage response = client.PostAsync(settings.CoreHrApiClockingEndpoint, content).Result;
                 log.Debug($"Record {record.EventID.ToString()}: {response.StatusCode.ToString()}");
 
 
@@ -500,7 +275,7 @@ namespace Lyca2CoreHrApiTask.DAL
              * Since our clocking system does not implement recording of 'out' and 'in' (clocking direction) consistently, the API 
              * has been configured to expect record_type = B0 (undefined) for all records.
             **/
-            string timeZoneOffset = "+00:00";
+            string timeZoneOffset = settings.DefaultTimeZoneOffset;
             ClockingPayload cp = new ClockingPayload()
             {
                 badge_no = clockingEvent.UserID.ToString(),

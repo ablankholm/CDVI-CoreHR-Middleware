@@ -52,7 +52,7 @@ namespace Lyca2CoreHrApiTask.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
         public int CoreHrApiTokenExpiryTolerance {
             get {
                 return ((int)(this["CoreHrApiTokenExpiryTolerance"]));
@@ -146,6 +146,42 @@ namespace Lyca2CoreHrApiTask.Properties {
         public string SmtpDefaultToEmail {
             get {
                 return ((string)(this["SmtpDefaultToEmail"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("+00:00")]
+        public string DefaultTimeZoneOffset {
+            get {
+                return ((string)(this["DefaultTimeZoneOffset"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://uatapi.corehr.com/")]
+        public string CoreHrApiBaseUri {
+            get {
+                return ((string)(this["CoreHrApiBaseUri"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int DefaultDnsRefreshTimeoutMinutes {
+            get {
+                return ((int)(this["DefaultDnsRefreshTimeoutMinutes"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("ws/lycau/corehr/v1/clocking/user/")]
+        public string CoreHrApiClockingEndpoint {
+            get {
+                return ((string)(this["CoreHrApiClockingEndpoint"]));
             }
         }
     }
