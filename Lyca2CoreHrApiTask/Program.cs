@@ -24,6 +24,8 @@ using MailKit;
 using MimeKit;
 using MailKit.Net.Smtp;
 using System.Runtime.InteropServices;
+using Lyca2CoreHrApiTask.Services;
+using System.Threading.Tasks;
 
 namespace Lyca2CoreHrApiTask
 {
@@ -35,6 +37,7 @@ namespace Lyca2CoreHrApiTask
         private LycaPolicyRegistry  policies    = new LycaPolicyRegistry();
         private CDVIRepository      CDVI        = new CDVIRepository();
         private CoreHrApi           CoreAPI     = new CoreHrApi();
+        private EmailService        SMTP        = new EmailService();
 
 
         public Program()
@@ -108,6 +111,7 @@ namespace Lyca2CoreHrApiTask
                         {
                             FreeConsole();
                         }
+
 
 
                         if (scope.HasValue())
@@ -742,38 +746,29 @@ namespace Lyca2CoreHrApiTask
         }
 
         //@TempTesting (refactor out to a dedicated testing module)
-        void TestSMTP(bool silent)
+        async void TestSMTP(bool silent)
         {
             try
             {
+                log.Debug("TestSMTP: Attempting to send email with configured SMTP settings...");
+
                 var settings = Properties.Settings.Default;
 
-                var message = new MimeMessage();
-                message.From.Add(new MailboxAddress("Lyca2CoreHRApi Middleware", "Lyca2CoreHRApiMiddleware@noreply.lycagroup.com"));
-                message.To.Add(new MailboxAddress("Developer", "anders.blankholm@switchwareltd.com"));
-                message.Subject = "SMTP Test | Lyca2CoreHRApi Middleware";
-                message.Body = new TextPart("plain") {
-                    Text = @"Hi Dev," + Environment.NewLine 
-                    + Environment.NewLine 
-                    + Environment.NewLine
-                    + "This is an SMTP test email" + Environment.NewLine
-                    + Environment.NewLine
-                    + Environment.NewLine
-                    + "Kind regards," + Environment.NewLine
-                    + "Lyca2CoreHRApi Middleware"
-                };
+                List<Task> emailTasks = new List<Task>();
+                emailTasks.Add(
+                    SMTP.SendEmailAsync(
+                        settings.SmtpDefaultToEmail,
+                        "SMTP Test",
+                        "Hi Dev," + Environment.NewLine
+                            + Environment.NewLine
+                            + "If you are receiving this, the SMTP test was successful" + Environment.NewLine
+                            + Environment.NewLine
+                            + "Kind regards," + Environment.NewLine
+                            + settings.SmtpDefaultFromName));
 
-                using (var client = new SmtpClient())
-                {
-                    client.Connect(settings.SmtpUri, settings.SmtpPort);
+                Task.WaitAll(emailTasks.ToArray());
 
-                    client.AuthenticationMechanisms.Remove("XOAUTH2");
-
-                    client.Authenticate(settings.SmtpUN, settings.SmtpPW);
-
-                    client.Send(message);
-                    client.Disconnect(true);
-                }
+                log.Debug("TestSMTP: Email sent");
             }
             catch (Exception ex)
             {

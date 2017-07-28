@@ -62,15 +62,15 @@ namespace Lyca2CoreHrApiTask.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("smtp.lycanet.com")]
-        public string SmtpUri {
+        public string SmtpDomain {
             get {
-                return ((string)(this["SmtpUri"]));
+                return ((string)(this["SmtpDomain"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("587")]
+        [global::System.Configuration.DefaultSettingValueAttribute("25")]
         public int SmtpPort {
             get {
                 return ((int)(this["SmtpPort"]));
@@ -119,6 +119,33 @@ namespace Lyca2CoreHrApiTask.Properties {
         public int DefaultExecutionPostLastXHours {
             get {
                 return ((int)(this["DefaultExecutionPostLastXHours"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Lyca Middleware (Clocking Record Shipping)")]
+        public string SmtpDefaultFromName {
+            get {
+                return ((string)(this["SmtpDefaultFromName"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("middleware@lycagroup.com")]
+        public string SmtpDefaultFromEmail {
+            get {
+                return ((string)(this["SmtpDefaultFromEmail"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("anders.blankholm@switchwareltd.com")]
+        public string SmtpDefaultToEmail {
+            get {
+                return ((string)(this["SmtpDefaultToEmail"]));
             }
         }
     }

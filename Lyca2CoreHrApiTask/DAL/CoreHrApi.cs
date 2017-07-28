@@ -330,6 +330,7 @@ namespace Lyca2CoreHrApiTask.DAL
 
 
                 timer.Start();
+
                 //Pre-Authenticate
                 authToken = Authenticate();
 
