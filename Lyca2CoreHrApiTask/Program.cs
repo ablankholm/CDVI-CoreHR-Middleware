@@ -213,6 +213,9 @@ namespace Lyca2CoreHrApiTask
                                 case "TestSMTP":
                                     app.TestSMTP(silentTesting);
                                     break;
+                                case "TestSMTPLogging":
+                                    app.TestSMTPLogging();
+                                    break;
                                 default:
                                     LogExit(ExitCode.InvalidTestName, Models.LogLevel.Debug);
                                     break;
@@ -783,6 +786,12 @@ namespace Lyca2CoreHrApiTask
             {
                 Console.ReadLine();
             }
+        }
+
+        //@TempTesting (refactor out to a dedicated testing module)
+        void TestSMTPLogging()
+        {
+            log.Fatal("This is an SMTP logging test");
         }
     }
 }
