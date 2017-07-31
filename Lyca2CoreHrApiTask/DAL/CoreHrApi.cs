@@ -175,7 +175,11 @@ namespace Lyca2CoreHrApiTask.DAL
 
                 //Execute request 
                 var response = await client.PostAsync(settings.CoreHrApiClockingEndpoint, content);
-                log.Debug($"Record {record.EventID.ToString()}: {response.StatusCode.ToString()}");
+                if (settings.DefaultExecutionIsSilent == false)
+                {
+                    log.Debug($"Record {record.EventID.ToString()}: {response.StatusCode.ToString()}");
+                }
+                
 
 
                 return new KeyValuePair<ClockingEvent, HttpResponseMessage>(record, response);
@@ -217,7 +221,11 @@ namespace Lyca2CoreHrApiTask.DAL
 
                 //Execute request 
                 HttpResponseMessage response = client.PostAsync(settings.CoreHrApiClockingEndpoint, content).Result;
-                log.Debug($"Record {record.EventID.ToString()}: {response.StatusCode.ToString()}");
+                if (settings.DefaultExecutionIsSilent == false)
+                {
+                    log.Debug($"Record {record.EventID.ToString()}: {response.StatusCode.ToString()}");
+                }
+                
 
 
                 return new KeyValuePair<ClockingEvent, HttpResponseMessage>(record, response);
