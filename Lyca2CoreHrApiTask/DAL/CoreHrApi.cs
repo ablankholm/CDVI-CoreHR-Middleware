@@ -23,6 +23,7 @@ namespace Lyca2CoreHrApiTask.DAL
     public class CoreHrApi
     {
         private static Logger       log                     = LogManager.GetCurrentClassLogger();
+        private static Logger       emailLog                = LogManager.GetLogger("EmailNotifcationLogger");
         private BearerTokenInfo     authToken               = new BearerTokenInfo();
         private Properties.Settings settings                = Properties.Settings.Default; //Convenience
         public LycaPolicyRegistry   Policies { get; set; }  = new LycaPolicyRegistry();
@@ -80,6 +81,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 timer.Stop();
                 log.Info($"Batch post completed in: {new TimeSpan(timer.ElapsedTicks).ToString()}");
                 log.Info($"Pending records: {state.PendingRecords.Count}, Last successful record: {state.LastSuccessfulRecord}");
+                emailLog.Info($"Batch processing of clockign records completed ({(batch.Count - state.PendingRecords.Count)} of {batch.Count} records successful, {state.PendingRecords.Count} not successful)");
 
                 return state;
             }
@@ -135,6 +137,7 @@ namespace Lyca2CoreHrApiTask.DAL
                 timer.Stop();
                 log.Info($"Batch post completed in: {new TimeSpan(timer.ElapsedTicks).ToString()}");
                 log.Info($"Pending records: {state.PendingRecords.Count}, Last successful record: {state.LastSuccessfulRecord}");
+                emailLog.Info($"Batch processing of clockign records completed ({(batch.Count - state.PendingRecords.Count)} of {batch.Count} records successful, {state.PendingRecords.Count} not successful)");
 
                 return state;
             }

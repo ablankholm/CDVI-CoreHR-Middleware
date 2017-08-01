@@ -791,7 +791,10 @@ namespace Lyca2CoreHrApiTask
         //@TempTesting (refactor out to a dedicated testing module)
         void TestSMTPLogging()
         {
-            log.Fatal("This is an SMTP logging test");
+            log.Fatal("This is an SMTP logging test for the default class logger under log level: Fatal");
+
+            Logger emailLog = LogManager.GetLogger("EmailNotifcationLogger");
+            emailLog.Debug("This is an SMTP logging test for the email notification under log level: Debug");
         }
     }
 }
